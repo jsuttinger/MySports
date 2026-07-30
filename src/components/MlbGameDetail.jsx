@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import BaseDiamond from './BaseDiamond'
 import Chevron from './Chevron'
 import DetailRow from './DetailRow'
-import { fetchMlbBoxScore } from '../services/espnApi'
+import { fetchMlbGameSummary } from '../services/espnApi'
 
 const BATTING_COLUMNS = ['AB', 'R', 'H', 'RBI', 'BB', 'K']
 const PITCHING_COLUMNS = ['IP', 'H', 'R', 'ER', 'BB', 'K', 'ERA']
@@ -98,12 +98,34 @@ function ScheduledInfo({ game }) {
   )
 }
 
+// Visible by default (not behind a toggle) whenever the card is expanded —
+// unlike the full box score, which stays opt-in behind its own button.
+function ScoringSummary({ loading, error, plays }) {
+  return (
+    <div className="scoring-summary">
+      <h4 className="section-heading">Scoring Summary</h4>
+      {loading && <p className="game-detail__placeholder">Loading scoring plays…</p>}
+      {error && <p className="state-message--error">Couldn't load scoring plays.</p>}
+      {!loading && !error && (!plays || plays.length === 0) && (
+        <p className="game-detail__placeholder">No runs scored yet.</p>
+      )}
+      {!loading && !error && plays && plays.length > 0 && (
+        <div className="scoring-summary__list">
+          {plays.map((play) => (
+            <DetailRow key={play.id} label={play.inningLabel} value={play.text} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function StatTable({ title, rows, columns }) {
   if (!rows || rows.length === 0) return null
 
   return (
     <div className="full-box__section">
-      <h4 className="full-box__heading">{title}</h4>
+      <h4 className="section-heading">{title}</h4>
       <div className="full-box__table-wrap">
         <table className="full-box__table">
           <thead>
@@ -144,28 +166,16 @@ function FullBoxScore({ teams }) {
   )
 }
 
-function FullBoxScoreToggle({ eventId }) {
+// Purely presentational now — the box score data is fetched once by the
+// parent (alongside the scoring plays) as soon as the card expands, so
+// opening this just reveals/hides what's already there.
+function FullBoxScoreToggle({ teams, loading, error }) {
   const [open, setOpen] = useState(false)
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
 
   function handleClick(event) {
     // Don't let this bubble up to the card's own tap-to-collapse handler.
     event.stopPropagation()
-    const next = !open
-    setOpen(next)
-    if (next && !data && !loading) {
-      setLoading(true)
-      setError(null)
-      fetchMlbBoxScore(eventId)
-        .then(setData)
-        .catch((err) => {
-          console.error('[MySports] Failed to fetch box score', err)
-          setError(err.message ?? String(err))
-        })
-        .finally(() => setLoading(false))
-    }
+    setOpen((current) => !current)
   }
 
   return (
@@ -177,17 +187,37 @@ function FullBoxScoreToggle({ eventId }) {
       {open && (
         <div className="full-box-toggle__content">
           {loading && <p className="game-detail__placeholder">Loading full box score…</p>}
-          {error && (
-            <p className="state-message--error">Couldn't load box score: {error}</p>
-          )}
-          {data && <FullBoxScore teams={data} />}
+          {error && <p className="state-message--error">Couldn't load box score: {error}</p>}
+          {teams && <FullBoxScore teams={teams} />}
         </div>
       )}
     </div>
   )
 }
 
-function MlbGameDetail({ game }) {
+function MlbGameDetail({ game, expanded }) {
+  const [summary, setSummary] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const fetchedRef = useRef(false)
+
+  // Fetch once, the first time the card is actually expanded — not on
+  // mount (the detail view stays mounted even while collapsed for the
+  // expand/collapse CSS animation) and not on scheduled games, which have
+  // no plays or box score yet.
+  useEffect(() => {
+    if (!expanded || fetchedRef.current || game.status === 'scheduled') return
+    fetchedRef.current = true
+    setLoading(true)
+    fetchMlbGameSummary(game.id)
+      .then(setSummary)
+      .catch((err) => {
+        console.error(`[MySports] Failed to fetch game summary for event ${game.id}`, err)
+        setError(err.message ?? String(err))
+      })
+      .finally(() => setLoading(false))
+  }, [expanded, game.id, game.status])
+
   if (game.status === 'scheduled') {
     return (
       <div className="game-detail">
@@ -200,7 +230,8 @@ function MlbGameDetail({ game }) {
     <div className="game-detail">
       <BoxScore away={game.away} home={game.home} />
       {game.status === 'live' && <AtBat situation={game.situation} />}
-      <FullBoxScoreToggle eventId={game.id} />
+      <ScoringSummary loading={loading} error={error} plays={summary?.scoringPlays} />
+      <FullBoxScoreToggle teams={summary?.boxScore} loading={loading} error={error} />
     </div>
   )
 }

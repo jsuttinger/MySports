@@ -200,15 +200,48 @@ function parseBoxScoreTeam(teamEntry) {
   }
 }
 
-// Full player-level box score for one MLB game, fetched lazily (only when
-// the user actually opens it) from ESPN's per-event summary endpoint —
-// the scoreboard endpoint only has team-level totals, not per-player lines.
-export async function fetchMlbBoxScore(eventId) {
+function ordinal(n) {
+  const rem100 = n % 100
+  if (rem100 >= 11 && rem100 <= 13) return `${n}th`
+  switch (n % 10) {
+    case 1:
+      return `${n}st`
+    case 2:
+      return `${n}nd`
+    case 3:
+      return `${n}rd`
+    default:
+      return `${n}th`
+  }
+}
+
+// ESPN's play-by-play already comes with a ready-made human-readable
+// description (including every runner who scored on multi-run plays), so we
+// just filter to scoring plays and format the inning label ourselves.
+function parseScoringPlays(json) {
+  const plays = json.plays ?? []
+  return plays
+    .filter((play) => play.scoringPlay)
+    .map((play) => ({
+      id: play.id,
+      inningLabel: play.period ? `${play.period.type} ${ordinal(play.period.number)}` : '',
+      text: play.text ?? '',
+    }))
+}
+
+// Full player-level box score + scoring play log for one MLB game, fetched
+// lazily (only once the card is actually expanded) from ESPN's per-event
+// summary endpoint — the scoreboard endpoint only has team-level totals and
+// no play-by-play at all.
+export async function fetchMlbGameSummary(eventId) {
   const response = await fetch(`${MLB_SUMMARY_URL}?event=${eventId}`)
   if (!response.ok) {
     throw new Error(`HTTP ${response.status} ${response.statusText}`)
   }
   const json = await response.json()
   const teams = json.boxscore?.players ?? []
-  return teams.map(parseBoxScoreTeam)
+  return {
+    boxScore: teams.map(parseBoxScoreTeam),
+    scoringPlays: parseScoringPlays(json),
+  }
 }

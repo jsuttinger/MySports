@@ -206,7 +206,7 @@ function TeamScoreCard({ game, sportKey, expanded, onToggle }) {
 
       <div className={`game-detail-wrapper${expanded ? ' game-detail-wrapper--expanded' : ''}`}>
         <div className="game-detail-inner">
-          <GameDetail sportKey={sportKey} game={game} />
+          <GameDetail sportKey={sportKey} game={game} expanded={expanded} />
         </div>
       </div>
     </article>
