@@ -9,16 +9,22 @@ function formatStartTime(iso) {
   })
 }
 
-function TeamRow({ team, showScore }) {
+function TeamRow({ team, showScore, muted }) {
   return (
-    <div className={`team-row${team.winner ? ' team-row--winner' : ''}`}>
+    <div className="team-row">
       {team.logo ? (
-        <img className="team-logo" src={team.logo} alt="" width={40} height={40} />
+        <img className="team-logo" src={team.logo} alt="" width={36} height={36} />
       ) : (
         <div className="team-logo team-logo--placeholder" />
       )}
-      <span className="team-name">{team.name}</span>
-      {showScore && <span className="team-score">{team.score ?? '-'}</span>}
+      <span
+        className={`team-name${team.winner ? ' team-name--winner' : ''}${muted ? ' team-name--muted' : ''}`}
+      >
+        {team.name}
+      </span>
+      {showScore && (
+        <span className={`team-score${muted ? ' team-score--muted' : ''}`}>{team.score ?? '-'}</span>
+      )}
     </div>
   )
 }
@@ -74,21 +80,35 @@ function LiveDetail({ situation }) {
 
 function TeamScoreCard({ game }) {
   const showScore = game.status !== 'scheduled'
-  const accent = game.home.color || game.away.color || '#7c7c88'
+  const isFinal = game.status === 'final'
+  const hasWinner = game.home.winner || game.away.winner
+  const accent = game.home.color || game.away.color || '#6e6e73'
 
   return (
     <article className={`game-card game-card--${game.status}`} style={{ '--accent': accent }}>
       <div className="game-card__status">
-        {game.status === 'live' && <span className="badge badge--live">LIVE</span>}
-        {game.status === 'final' && <span className="badge badge--final">FINAL</span>}
+        {game.status === 'live' && (
+          <span className="live-indicator">
+            <span className="live-dot" />
+            LIVE
+          </span>
+        )}
         <span className="status-detail">
           {game.status === 'scheduled' ? formatStartTime(game.startTime) : game.statusDetail}
         </span>
       </div>
 
       <div className="game-card__teams">
-        <TeamRow team={game.away} showScore={showScore} />
-        <TeamRow team={game.home} showScore={showScore} />
+        <TeamRow
+          team={game.away}
+          showScore={showScore}
+          muted={isFinal && hasWinner && !game.away.winner}
+        />
+        <TeamRow
+          team={game.home}
+          showScore={showScore}
+          muted={isFinal && hasWinner && !game.home.winner}
+        />
       </div>
 
       {game.status === 'live' && <LiveDetail situation={game.situation} />}
