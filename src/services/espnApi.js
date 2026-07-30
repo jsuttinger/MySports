@@ -1,5 +1,5 @@
 // Fetches live scoreboard data directly from ESPN's public (undocumented) site API.
-// Called straight from the browser for now — no backend proxy. If ESPN's CORS
+// Called straight from the browser — no backend proxy. If ESPN's CORS
 // headers don't allow browser requests, fetch() will reject and we log+surface
 // the raw error instead of swallowing it, so it can be diagnosed.
 
@@ -40,11 +40,26 @@ function normalizeStatus(state) {
 }
 
 function parseTeam(competitor) {
+  const team = competitor?.team ?? {}
   return {
-    name: competitor?.team?.displayName ?? competitor?.team?.name ?? 'Unknown',
-    abbreviation: competitor?.team?.abbreviation ?? '',
+    name: team.displayName ?? team.name ?? 'Unknown',
+    abbreviation: team.abbreviation ?? '',
     score: competitor?.score ?? null,
     homeAway: competitor?.homeAway ?? null,
+    winner: competitor?.winner ?? false,
+    logo: team.logo ?? team.logos?.[0]?.href ?? null,
+    color: team.color ? `#${team.color}` : null,
+    alternateColor: team.alternateColor ? `#${team.alternateColor}` : null,
+  }
+}
+
+function parseOdds(competition) {
+  const odds = competition?.odds?.[0]
+  if (!odds) return null
+  return {
+    provider: odds.provider?.name ?? null,
+    spreadDetails: odds.details ?? null,
+    overUnder: odds.overUnder ?? null,
   }
 }
 
@@ -63,6 +78,7 @@ function parseEvent(event) {
     statusDetail: statusType.shortDetail ?? statusType.detail ?? statusType.description ?? '',
     home: parseTeam(home),
     away: parseTeam(away),
+    odds: parseOdds(competition),
   }
 }
 
