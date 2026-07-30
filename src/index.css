@@ -164,14 +164,27 @@ body {
   height: 36px;
   object-fit: contain;
   flex: none;
-  background: #f3f4f7;
+  background: #e4e4e8;
+  opacity: 0.96;
   border-radius: 50%;
-  padding: 5px;
+  padding: 6px;
   box-sizing: border-box;
 }
 
-.team-logo--placeholder {
+.team-logo--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--surface-2);
+  border: 1px solid var(--border);
+  opacity: 1;
+}
+
+.team-logo--fallback span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--text-secondary);
 }
 
 .team-name {

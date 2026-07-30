@@ -1,3 +1,6 @@
+import { useState } from 'react'
+import { pickAccentColor } from '../utils/teamColor'
+
 function formatStartTime(iso) {
   if (!iso) return 'TBD'
   return new Date(iso).toLocaleString(undefined, {
@@ -9,14 +12,38 @@ function formatStartTime(iso) {
   })
 }
 
+function initialsFor(team) {
+  if (team.abbreviation) return team.abbreviation.slice(0, 3).toUpperCase()
+  return team.name.slice(0, 3).toUpperCase()
+}
+
+function TeamLogo({ team }) {
+  const [failed, setFailed] = useState(false)
+
+  if (!team.logo || failed) {
+    return (
+      <div className="team-logo team-logo--fallback">
+        <span>{initialsFor(team)}</span>
+      </div>
+    )
+  }
+
+  return (
+    <img
+      className="team-logo"
+      src={team.logo}
+      alt=""
+      width={36}
+      height={36}
+      onError={() => setFailed(true)}
+    />
+  )
+}
+
 function TeamRow({ team, showScore, muted }) {
   return (
     <div className="team-row">
-      {team.logo ? (
-        <img className="team-logo" src={team.logo} alt="" width={36} height={36} />
-      ) : (
-        <div className="team-logo team-logo--placeholder" />
-      )}
+      <TeamLogo team={team} />
       <span
         className={`team-name${team.winner ? ' team-name--winner' : ''}${muted ? ' team-name--muted' : ''}`}
       >
@@ -82,7 +109,7 @@ function TeamScoreCard({ game }) {
   const showScore = game.status !== 'scheduled'
   const isFinal = game.status === 'final'
   const hasWinner = game.home.winner || game.away.winner
-  const accent = game.home.color || game.away.color || '#6e6e73'
+  const accent = pickAccentColor(game)
 
   return (
     <article className={`game-card game-card--${game.status}`} style={{ '--accent': accent }}>
