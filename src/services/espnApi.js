@@ -63,6 +63,35 @@ function parseOdds(competition) {
   }
 }
 
+const DOWN_NAMES = { 1: '1st', 2: '2nd', 3: '3rd', 4: '4th' }
+
+// The live "situation" object varies by sport: baseball has balls/strikes/outs
+// and base runners, football has down/distance/possession. Everything here is
+// optional — a sport that doesn't provide a field just won't render it.
+function parseSituation(competition) {
+  const situation = competition?.situation
+  if (!situation) return null
+
+  const downDistance =
+    situation.shortDownDistanceText ??
+    situation.downDistanceText ??
+    (situation.down && situation.distance
+      ? `${DOWN_NAMES[situation.down] ?? situation.down} & ${situation.distance}`
+      : null)
+
+  return {
+    lastPlay: situation.lastPlay?.text ?? null,
+    downDistance,
+    possession: situation.possessionText ?? null,
+    balls: situation.balls ?? null,
+    strikes: situation.strikes ?? null,
+    outs: situation.outs ?? null,
+    onFirst: situation.onFirst ?? false,
+    onSecond: situation.onSecond ?? false,
+    onThird: situation.onThird ?? false,
+  }
+}
+
 function parseEvent(event) {
   const competition = event.competitions?.[0]
   const competitors = competition?.competitors ?? []
@@ -79,6 +108,7 @@ function parseEvent(event) {
     home: parseTeam(home),
     away: parseTeam(away),
     odds: parseOdds(competition),
+    situation: parseSituation(competition),
   }
 }
 

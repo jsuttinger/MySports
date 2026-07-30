@@ -96,9 +96,9 @@ body {
 /* Game list */
 
 .game-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .game-card {
@@ -107,13 +107,13 @@ body {
   border: 1px solid var(--border);
   border-left: 4px solid var(--accent);
   border-radius: 14px;
-  padding: 16px;
+  padding: 18px 20px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
   transition: transform 0.15s ease;
 }
 
 .game-card:hover {
-  transform: translateY(-2px);
+  transform: translateX(2px);
 }
 
 .game-card--final {
@@ -182,8 +182,8 @@ body {
 }
 
 .team-logo {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   object-fit: contain;
   flex: none;
 }
@@ -214,6 +214,84 @@ body {
   font-variant-numeric: tabular-nums;
   min-width: 24px;
   text-align: right;
+}
+
+/* Live detail */
+
+.live-detail {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--live) 10%, var(--surface-2));
+  border: 1px solid color-mix(in srgb, var(--live) 25%, var(--border));
+  border-radius: 10px;
+}
+
+.live-detail__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.live-detail__row + .live-detail__row {
+  margin-top: 6px;
+}
+
+.live-detail__tag {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.live-detail__possession {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.live-detail__play {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Base diamond */
+
+.diamond {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  flex: none;
+}
+
+.diamond__base {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--border);
+  transform: rotate(45deg);
+  border-radius: 1px;
+}
+
+.diamond__base--second {
+  top: 0;
+  left: 9px;
+}
+
+.diamond__base--third {
+  bottom: 3px;
+  left: 0;
+}
+
+.diamond__base--first {
+  bottom: 3px;
+  right: 0;
+}
+
+.diamond__base--on {
+  background: var(--live);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--live) 80%, transparent);
 }
 
 /* Odds */

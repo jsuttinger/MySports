@@ -13,12 +13,61 @@ function TeamRow({ team, showScore }) {
   return (
     <div className={`team-row${team.winner ? ' team-row--winner' : ''}`}>
       {team.logo ? (
-        <img className="team-logo" src={team.logo} alt="" width={36} height={36} />
+        <img className="team-logo" src={team.logo} alt="" width={40} height={40} />
       ) : (
         <div className="team-logo team-logo--placeholder" />
       )}
       <span className="team-name">{team.name}</span>
       {showScore && <span className="team-score">{team.score ?? '-'}</span>}
+    </div>
+  )
+}
+
+function BaseDiamond({ onFirst, onSecond, onThird }) {
+  return (
+    <span className="diamond" title="Runners on base">
+      <span className={`diamond__base diamond__base--second${onSecond ? ' diamond__base--on' : ''}`} />
+      <span className={`diamond__base diamond__base--third${onThird ? ' diamond__base--on' : ''}`} />
+      <span className={`diamond__base diamond__base--first${onFirst ? ' diamond__base--on' : ''}`} />
+    </span>
+  )
+}
+
+function LiveDetail({ situation }) {
+  if (!situation) return null
+
+  const hasCount = situation.balls != null && situation.strikes != null
+  const hasFootball = Boolean(situation.downDistance)
+  const hasBases = situation.onFirst || situation.onSecond || situation.onThird
+
+  if (!hasCount && !hasFootball && !situation.lastPlay) return null
+
+  return (
+    <div className="live-detail">
+      {hasFootball && (
+        <div className="live-detail__row">
+          <span className="live-detail__tag">{situation.downDistance}</span>
+          {situation.possession && (
+            <span className="live-detail__possession">{situation.possession} ball</span>
+          )}
+        </div>
+      )}
+      {hasCount && (
+        <div className="live-detail__row">
+          <span className="live-detail__tag">
+            {situation.balls}-{situation.strikes}, {situation.outs ?? 0} out
+            {situation.outs === 1 ? '' : 's'}
+          </span>
+          {hasBases && (
+            <BaseDiamond
+              onFirst={situation.onFirst}
+              onSecond={situation.onSecond}
+              onThird={situation.onThird}
+            />
+          )}
+        </div>
+      )}
+      {situation.lastPlay && <p className="live-detail__play">{situation.lastPlay}</p>}
     </div>
   )
 }
@@ -41,6 +90,8 @@ function TeamScoreCard({ game }) {
         <TeamRow team={game.away} showScore={showScore} />
         <TeamRow team={game.home} showScore={showScore} />
       </div>
+
+      {game.status === 'live' && <LiveDetail situation={game.situation} />}
 
       {game.odds && (game.odds.spreadDetails || game.odds.overUnder != null) && (
         <div className="game-card__odds">
