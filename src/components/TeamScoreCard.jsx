@@ -45,7 +45,7 @@ function TeamLogo({ team }) {
   )
 }
 
-function TeamRow({ team, showScore, muted }) {
+function TeamRow({ team, showScore, muted, spread }) {
   return (
     <div className="team-row">
       <TeamLogo team={team} />
@@ -54,6 +54,7 @@ function TeamRow({ team, showScore, muted }) {
       >
         {team.name}
       </span>
+      {spread && <span className="team-spread">{spread}</span>}
       {showScore && (
         <span className={`team-score${muted ? ' team-score--muted' : ''}`}>{team.score ?? '-'}</span>
       )}
@@ -106,6 +107,13 @@ function TeamScoreCard({ game, sportKey, expanded, onToggle }) {
   const hasWinner = game.home.winner || game.away.winner
   const accent = pickAccentColor(game)
   const cardRef = useRef(null)
+
+  // Only show the spread inline next to a team's name when we can clearly
+  // tell who's favored; otherwise fall back to the raw odds text below.
+  const hasInlineSpread = Boolean(game.odds?.favoriteSide) && game.odds?.spreadValue != null
+  const awaySpread = hasInlineSpread && game.odds.favoriteSide === 'away' ? `-${game.odds.spreadValue}` : null
+  const homeSpread = hasInlineSpread && game.odds.favoriteSide === 'home' ? `-${game.odds.spreadValue}` : null
+  const fallbackSpreadText = !hasInlineSpread ? game.odds?.spreadDetails : null
 
   const [flashing, setFlashing] = useState(false)
   useEffect(() => {
@@ -161,19 +169,21 @@ function TeamScoreCard({ game, sportKey, expanded, onToggle }) {
           team={game.away}
           showScore={showScore}
           muted={isFinal && hasWinner && !game.away.winner}
+          spread={awaySpread}
         />
         <TeamRow
           team={game.home}
           showScore={showScore}
           muted={isFinal && hasWinner && !game.home.winner}
+          spread={homeSpread}
         />
       </div>
 
       {game.status === 'live' && !expanded && <LiveDetail situation={game.situation} />}
 
-      {game.odds && (game.odds.spreadDetails || game.odds.overUnder != null) && (
+      {game.odds && (fallbackSpreadText || game.odds.overUnder != null) && (
         <div className="game-card__odds">
-          {game.odds.spreadDetails && <span>Spread {game.odds.spreadDetails}</span>}
+          {fallbackSpreadText && <span>Spread {fallbackSpreadText}</span>}
           {game.odds.overUnder != null && <span>O/U {game.odds.overUnder}</span>}
         </div>
       )}

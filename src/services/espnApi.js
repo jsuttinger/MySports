@@ -62,12 +62,22 @@ function parseTeam(competitor) {
   }
 }
 
+// ESPN marks the favored side with awayTeamOdds.favorite / homeTeamOdds.favorite
+// booleans and gives an unsigned spread magnitude — more reliable than parsing
+// the free-text `details` string (e.g. "CAR -1.5"), which we still keep as a
+// fallback for whenever the structured fields don't clearly identify a
+// favorite (e.g. a pick'em, or a sport/provider that omits them).
 function parseOdds(competition) {
   const odds = competition?.odds?.[0]
   if (!odds) return null
+
+  const favoriteSide = odds.awayTeamOdds?.favorite ? 'away' : odds.homeTeamOdds?.favorite ? 'home' : null
+
   return {
     provider: odds.provider?.name ?? null,
     spreadDetails: odds.details ?? null,
+    spreadValue: typeof odds.spread === 'number' ? Math.abs(odds.spread) : null,
+    favoriteSide,
     overUnder: odds.overUnder ?? null,
   }
 }
