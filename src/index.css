@@ -302,6 +302,7 @@ body {
 .diamond {
   position: relative;
   flex: none;
+  margin-right: 8px;
 }
 
 .diamond--small {
