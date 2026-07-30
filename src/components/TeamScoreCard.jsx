@@ -110,12 +110,24 @@ function TeamScoreCard({ game, sportKey, expanded, onToggle }) {
   const accent = pickAccentColor(game)
   const cardRef = useRef(null)
 
-  // Only show the spread inline next to a team's name when we can clearly
-  // tell who's favored; otherwise fall back to the raw odds text below.
-  const hasInlineSpread = Boolean(game.odds?.favoriteSide) && game.odds?.spreadValue != null
-  const awaySpread = hasInlineSpread && game.odds.favoriteSide === 'away' ? `-${game.odds.spreadValue}` : null
-  const homeSpread = hasInlineSpread && game.odds.favoriteSide === 'home' ? `-${game.odds.spreadValue}` : null
-  const fallbackSpreadText = !hasInlineSpread ? game.odds?.spreadDetails : null
+  // Only show a line inline next to a team's name when we can clearly tell
+  // who's favored; otherwise fall back to the raw odds text below. MLB shows
+  // the moneyline (baseball's primary bet type) instead of the run line.
+  const favoriteSide = game.odds?.favoriteSide ?? null
+  const favoriteValue =
+    sportKey === 'mlb'
+      ? favoriteSide === 'away'
+        ? game.odds?.moneylineAway
+        : favoriteSide === 'home'
+          ? game.odds?.moneylineHome
+          : null
+      : game.odds?.spreadValue != null
+        ? `-${game.odds.spreadValue}`
+        : null
+  const hasInlineLine = Boolean(favoriteSide) && favoriteValue != null
+  const awaySpread = hasInlineLine && favoriteSide === 'away' ? favoriteValue : null
+  const homeSpread = hasInlineLine && favoriteSide === 'home' ? favoriteValue : null
+  const fallbackSpreadText = !hasInlineLine ? game.odds?.spreadDetails : null
 
   const [flashing, setFlashing] = useState(false)
   useEffect(() => {

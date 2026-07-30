@@ -74,6 +74,9 @@ function parseOdds(competition) {
     spreadValue: typeof odds.spread === 'number' ? Math.abs(odds.spread) : null,
     favoriteSide,
     overUnder: odds.overUnder ?? null,
+    // Already-signed American odds strings (e.g. "-142", "+118").
+    moneylineAway: odds.moneyline?.away?.close?.odds ?? odds.moneyline?.away?.open?.odds ?? null,
+    moneylineHome: odds.moneyline?.home?.close?.odds ?? odds.moneyline?.home?.open?.odds ?? null,
   }
 }
 
