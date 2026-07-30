@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import BaseDiamond from './BaseDiamond'
 import Chevron from './Chevron'
 import DetailRow from './DetailRow'
+import ScoringSummary from './ScoringSummary'
 import { fetchMlbGameSummary } from '../services/espnApi'
 
 const BATTING_COLUMNS = ['AB', 'R', 'H', 'RBI', 'BB', 'K']
@@ -95,28 +96,6 @@ function ScheduledInfo({ game }) {
       )}
       {!hasProbables && !hasRecords && <p className="game-detail__placeholder">No additional info yet.</p>}
     </>
-  )
-}
-
-// Visible by default (not behind a toggle) whenever the card is expanded —
-// unlike the full box score, which stays opt-in behind its own button.
-function ScoringSummary({ loading, error, plays }) {
-  return (
-    <div className="scoring-summary">
-      <h4 className="section-heading">Scoring Summary</h4>
-      {loading && <p className="game-detail__placeholder">Loading scoring plays…</p>}
-      {error && <p className="state-message--error">Couldn't load scoring plays.</p>}
-      {!loading && !error && (!plays || plays.length === 0) && (
-        <p className="game-detail__placeholder">No runs scored yet.</p>
-      )}
-      {!loading && !error && plays && plays.length > 0 && (
-        <div className="scoring-summary__list">
-          {plays.map((play) => (
-            <DetailRow key={play.id} label={play.inningLabel} value={play.text} />
-          ))}
-        </div>
-      )}
-    </div>
   )
 }
 
@@ -230,7 +209,12 @@ function MlbGameDetail({ game, expanded }) {
     <div className="game-detail">
       <BoxScore away={game.away} home={game.home} />
       {game.status === 'live' && <AtBat situation={game.situation} />}
-      <ScoringSummary loading={loading} error={error} plays={summary?.scoringPlays} />
+      <ScoringSummary
+        loading={loading}
+        error={error}
+        plays={summary?.scoringPlays}
+        emptyMessage="No runs scored yet."
+      />
       <FullBoxScoreToggle teams={summary?.boxScore} loading={loading} error={error} />
     </div>
   )

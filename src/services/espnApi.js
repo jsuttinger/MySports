@@ -218,7 +218,7 @@ function ordinal(n) {
 // ESPN's play-by-play already comes with a ready-made human-readable
 // description (including every runner who scored on multi-run plays), so we
 // just filter to scoring plays and format the inning label ourselves.
-function parseScoringPlays(json) {
+function parseMlbScoringPlays(json) {
   const plays = json.plays ?? []
   return plays
     .filter((play) => play.scoringPlay)
@@ -242,6 +242,65 @@ export async function fetchMlbGameSummary(eventId) {
   const teams = json.boxscore?.players ?? []
   return {
     boxScore: teams.map(parseBoxScoreTeam),
-    scoringPlays: parseScoringPlays(json),
+    scoringPlays: parseMlbScoringPlays(json),
   }
+}
+
+const SCORING_SUMMARY_URLS = {
+  nfl: 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary',
+  nhl: 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary',
+}
+
+// NFL quarters/OT: period.number has no displayValue on this endpoint (unlike
+// NHL), so format it ourselves. Regulation is 4 quarters; anything past that
+// is overtime.
+function formatFootballPeriodLabel(period) {
+  if (!period?.number) return ''
+  if (period.number <= 4) return `${ordinal(period.number)} Quarter`
+  const otNumber = period.number - 4
+  return otNumber <= 1 ? 'Overtime' : `${ordinal(otNumber)} Overtime`
+}
+
+// NFL's summary endpoint pre-filters scoring plays into their own top-level
+// array (unlike MLB/NHL, which flag individual entries in the full `plays`
+// list) — different shape, same idea.
+function parseNflScoringPlays(json) {
+  return (json.scoringPlays ?? []).map((play) => ({
+    id: play.id,
+    inningLabel: formatFootballPeriodLabel(play.period),
+    text: play.text ?? '',
+  }))
+}
+
+// NHL matches MLB's shape (scoringPlay flag inside the full `plays` list),
+// but period.displayValue is already formatted ("1st", "2nd", "3rd"), so no
+// ordinal conversion needed.
+function parseNhlScoringPlays(json) {
+  const plays = json.plays ?? []
+  return plays
+    .filter((play) => play.scoringPlay)
+    .map((play) => ({
+      id: play.id,
+      inningLabel: play.period?.displayValue ? `${play.period.displayValue} Period` : '',
+      text: play.text ?? '',
+    }))
+}
+
+// Scoring plays only (no box score) for sports that don't have a full
+// dedicated detail view yet. Returns [] for sports without a known summary
+// endpoint/shape rather than throwing, so callers can treat "unsupported"
+// and "no plays yet" the same way.
+export async function fetchScoringPlays(sportKey, eventId) {
+  const baseUrl = SCORING_SUMMARY_URLS[sportKey]
+  if (!baseUrl) return []
+
+  const response = await fetch(`${baseUrl}?event=${eventId}`)
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} ${response.statusText}`)
+  }
+  const json = await response.json()
+
+  if (sportKey === 'nfl') return parseNflScoringPlays(json)
+  if (sportKey === 'nhl') return parseNhlScoringPlays(json)
+  return []
 }
