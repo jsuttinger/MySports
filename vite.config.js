@@ -13,7 +13,7 @@ export default defineConfig({
       manifest: {
         name: 'MySports',
         short_name: 'MySports',
-        description: 'Live scores for NFL, NBA, MLB, NHL, and Premier League',
+        description: 'Live scores for NFL, NBA, MLB, and NHL',
         start_url: '/MySports/',
         scope: '/MySports/',
         display: 'standalone',

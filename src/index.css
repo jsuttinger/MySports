@@ -292,8 +292,17 @@ body {
   color: var(--text-secondary);
 }
 
-.team-name {
+.team-name-group {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
   flex: 1;
+  min-width: 0;
+}
+
+.team-name {
+  flex: 0 1 auto;
+  min-width: 0;
   font-size: 15px;
   font-weight: 600;
   color: var(--text);

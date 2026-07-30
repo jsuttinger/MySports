@@ -24,11 +24,6 @@ export const SPORTS = [
     label: 'NHL',
     url: 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard',
   },
-  {
-    key: 'epl',
-    label: 'Premier League',
-    url: 'https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard',
-  },
 ]
 
 // ESPN's `status.type.state` is one of: 'pre' | 'in' | 'post'.

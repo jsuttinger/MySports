@@ -4,10 +4,10 @@ Sports score and live updates app
 ## Step 1: prove live score fetching works
 
 A Vite + React app that fetches live scoreboards directly from ESPN's public
-site API for NFL, NBA, MLB, NHL, and Premier League, and renders the raw
-parsed results (team names, score, status, start time) in an unstyled list.
-No backend proxy yet — this is just to confirm the data comes through (or to
-see the exact CORS error if it doesn't).
+site API for NFL, NBA, MLB, and NHL, and renders the raw parsed results (team
+names, score, status, start time) in an unstyled list. No backend proxy yet —
+this is just to confirm the data comes through (or to see the exact CORS
+error if it doesn't).
 
 ### Prerequisites (Ubuntu)
 

@@ -49,12 +49,14 @@ function TeamRow({ team, showScore, muted, spread }) {
   return (
     <div className="team-row">
       <TeamLogo team={team} />
-      <span
-        className={`team-name${team.winner ? ' team-name--winner' : ''}${muted ? ' team-name--muted' : ''}`}
-      >
-        {team.name}
+      <span className="team-name-group">
+        <span
+          className={`team-name${team.winner ? ' team-name--winner' : ''}${muted ? ' team-name--muted' : ''}`}
+        >
+          {team.name}
+        </span>
+        {spread && <span className="team-spread">{spread}</span>}
       </span>
-      {spread && <span className="team-spread">{spread}</span>}
       {showScore && (
         <span className={`team-score${muted ? ' team-score--muted' : ''}`}>{team.score ?? '-'}</span>
       )}

@@ -1,8 +1,8 @@
 import DetailRow from './DetailRow'
 
 // Placeholder detail view for sports without a dedicated one yet (NFL, NBA,
-// NHL, soccer). Only surfaces data the shared espnApi parser already
-// extracts for every sport — no sport-specific parsing added here.
+// NHL). Only surfaces data the shared espnApi parser already extracts for
+// every sport — no sport-specific parsing added here.
 function GenericGameDetail({ game }) {
   const hasRecords = game.away.record || game.home.record
   const hasLastPlay = Boolean(game.situation?.lastPlay)
