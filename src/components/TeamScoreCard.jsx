@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { pickAccentColor } from '../utils/teamColor'
+
+const SCORE_FLASH_MS = 1400
 
 function formatStartTime(iso) {
   if (!iso) return 'TBD'
@@ -111,8 +113,19 @@ function TeamScoreCard({ game }) {
   const hasWinner = game.home.winner || game.away.winner
   const accent = pickAccentColor(game)
 
+  const [flashing, setFlashing] = useState(false)
+  useEffect(() => {
+    if (!game.scoreChangedAt) return
+    setFlashing(true)
+    const timeout = setTimeout(() => setFlashing(false), SCORE_FLASH_MS)
+    return () => clearTimeout(timeout)
+  }, [game.scoreChangedAt])
+
   return (
-    <article className={`game-card game-card--${game.status}`} style={{ '--accent': accent }}>
+    <article
+      className={`game-card game-card--${game.status}${flashing ? ' game-card--flash' : ''}`}
+      style={{ '--accent': accent }}
+    >
       <div className="game-card__status">
         {game.status === 'live' && (
           <span className="live-indicator">

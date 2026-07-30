@@ -1,24 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
-import { fetchAllScoreboards, SPORTS } from './services/espnApi'
+import { useState } from 'react'
+import { SPORTS } from './services/espnApi'
+import { useScoreboard } from './hooks/useScoreboard'
 import SportTab from './components/SportTab'
 import GameList from './components/GameList'
+import LastUpdated from './components/LastUpdated'
 
 function App() {
-  const [sportsData, setSportsData] = useState(null)
-  const [loading, setLoading] = useState(true)
   const [activeSport, setActiveSport] = useState(SPORTS[0].key)
-
-  useEffect(() => {
-    fetchAllScoreboards().then((results) => {
-      setSportsData(results)
-      setLoading(false)
-    })
-  }, [])
-
-  const activeSportData = useMemo(
-    () => sportsData?.find((sport) => sport.key === activeSport) ?? null,
-    [sportsData, activeSport],
-  )
+  const sportData = useScoreboard(activeSport)
 
   return (
     <div className="app">
@@ -37,9 +26,11 @@ function App() {
         ))}
       </nav>
 
+      <LastUpdated timestamp={sportData?.lastUpdated} />
+
       <main>
-        {loading && <p className="state-message">Loading scores…</p>}
-        {activeSportData && <GameList sport={activeSportData} />}
+        {!sportData && <p className="state-message">Loading scores…</p>}
+        {sportData && <GameList sport={sportData} />}
       </main>
     </div>
   )

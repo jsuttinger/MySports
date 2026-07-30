@@ -132,8 +132,10 @@ async function fetchSportScoreboard({ key, label, url }) {
   }
 }
 
-// Fetches all configured sports concurrently. Each sport is isolated so one
-// failing request (e.g. CORS) doesn't prevent the others from rendering.
-export async function fetchAllScoreboards() {
-  return Promise.all(SPORTS.map(fetchSportScoreboard))
+// Fetches a single sport's scoreboard by key, for the active-tab-only
+// refresh loop (no point re-fetching sports the user isn't looking at).
+export async function fetchScoreboard(key) {
+  const sport = SPORTS.find((s) => s.key === key)
+  if (!sport) throw new Error(`Unknown sport: ${key}`)
+  return fetchSportScoreboard(sport)
 }
