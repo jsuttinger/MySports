@@ -16,7 +16,11 @@
 
 body {
   margin: 0;
-  background: var(--bg);
+  min-height: 100vh;
+  background:
+    radial-gradient(1100px 500px at 50% -8%, rgba(120, 130, 255, 0.05), transparent 65%),
+    linear-gradient(180deg, #0d0d10 0%, var(--bg) 45%);
+  background-attachment: fixed;
   color: var(--text);
   font-family:
     -apple-system,
@@ -189,6 +193,28 @@ body {
 
 .game-card--final {
   opacity: 0.6;
+}
+
+.game-card--live {
+  position: relative;
+  overflow: hidden;
+}
+
+.game-card--live::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  left: -30px;
+  right: -30px;
+  height: 170px;
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--away-glow) 16%, transparent),
+    color-mix(in srgb, var(--home-glow) 16%, transparent)
+  );
+  filter: blur(38px);
+  z-index: -1;
+  pointer-events: none;
 }
 
 .game-card--flash {

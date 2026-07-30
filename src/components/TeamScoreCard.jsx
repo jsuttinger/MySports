@@ -108,6 +108,8 @@ function TeamScoreCard({ game, sportKey, expanded, onToggle }) {
   const isFinal = game.status === 'final'
   const hasWinner = game.home.winner || game.away.winner
   const accent = pickAccentColor(game)
+  const homeGlow = game.home.color || accent
+  const awayGlow = game.away.color || accent
   const cardRef = useRef(null)
 
   // Only show a line inline next to a team's name when we can clearly tell
@@ -153,7 +155,7 @@ function TeamScoreCard({ game, sportKey, expanded, onToggle }) {
     <article
       ref={cardRef}
       className={`game-card game-card--${game.status}${flashing ? ' game-card--flash' : ''}`}
-      style={{ '--accent': accent }}
+      style={{ '--accent': accent, '--home-glow': homeGlow, '--away-glow': awayGlow }}
       onClick={onToggle}
       role="button"
       tabIndex={0}
