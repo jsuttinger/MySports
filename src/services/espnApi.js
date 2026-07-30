@@ -136,28 +136,34 @@ function parseScoreboard(json) {
   return (json.events ?? []).map(parseEvent)
 }
 
-async function fetchSportScoreboard({ key, label, url }) {
+async function fetchSportScoreboard({ key, label, url: baseUrl }, dateParam) {
+  // ESPN's scoreboard defaults to whatever IT considers "today" when no
+  // `dates` param is given — this can lag a full day behind the user's
+  // actual local date (observed: ESPN serving yesterday's slate mid-day).
+  // Always pass an explicit date so "today" means the user's local today.
+  const url = dateParam ? `${baseUrl}?dates=${dateParam}` : baseUrl
   try {
     const response = await fetch(url)
     if (!response.ok) {
       throw new Error(`HTTP ${response.status} ${response.statusText}`)
     }
     const json = await response.json()
-    return { key, label, url, games: parseScoreboard(json), error: null }
+    return { key, label, url, dateParam, games: parseScoreboard(json), error: null }
   } catch (err) {
     // Surface the exact error (e.g. a CORS failure will show as a TypeError:
     // "Failed to fetch" here, with the real reason only visible in devtools).
     console.error(`[MySports] Failed to fetch ${label} scoreboard from ${url}`, err)
-    return { key, label, url, games: [], error: err.message ?? String(err) }
+    return { key, label, url, dateParam, games: [], error: err.message ?? String(err) }
   }
 }
 
-// Fetches a single sport's scoreboard by key, for the active-tab-only
-// refresh loop (no point re-fetching sports the user isn't looking at).
-export async function fetchScoreboard(key) {
+// Fetches a single sport's scoreboard by key and local date (YYYYMMDD), for
+// the active-tab-only refresh loop (no point re-fetching sports/dates the
+// user isn't looking at).
+export async function fetchScoreboard(key, dateParam) {
   const sport = SPORTS.find((s) => s.key === key)
   if (!sport) throw new Error(`Unknown sport: ${key}`)
-  return fetchSportScoreboard(sport)
+  return fetchSportScoreboard(sport, dateParam)
 }
 
 const MLB_SUMMARY_URL = 'https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary'

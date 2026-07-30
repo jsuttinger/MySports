@@ -5,11 +5,12 @@ import { sortGames } from '../utils/sortGames'
 function GameList({ sport }) {
   const [expandedId, setExpandedId] = useState(null)
 
-  // Switching sport tabs should never leave a card from a different sport
-  // "remembered" as expanded.
+  // Switching sport tabs or the selected date should never leave a card
+  // from a different list "remembered" as expanded. `sport.url` already
+  // encodes both the sport and the date param, so it changes on either.
   useEffect(() => {
     setExpandedId(null)
-  }, [sport.key])
+  }, [sport.url])
 
   if (sport.error) {
     return (

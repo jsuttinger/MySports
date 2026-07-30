@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchScoreboard } from '../services/espnApi'
+import { todayParam } from '../utils/date'
 
 const REFRESH_INTERVAL_MS = 60000
 
@@ -15,37 +16,40 @@ function tagScoreChanges(games, previousGames) {
   })
 }
 
-// Fetches and auto-refreshes only the given sport: immediately on mount and
-// whenever `sportKey` changes, then every 60s while the browser tab is
-// visible. Switching back to a hidden tab triggers an immediate refresh
-// instead of waiting out the rest of the interval. Data for previously
-// viewed sports is kept around so switching tabs doesn't show a blank
-// loading state, and a failed background refresh doesn't wipe out the last
-// good data — it just silently keeps showing it.
-export function useScoreboard(sportKey) {
+// Fetches and auto-refreshes the given sport + local date (YYYYMMDD):
+// immediately on mount and whenever either changes, then every 60s while the
+// browser tab is visible -- but only when `dateParam` is actually today,
+// re-checked fresh at each tick (not captured once) so a tab left open
+// across midnight stops "refreshing" a day that's no longer today. Data for
+// previously viewed sport/date pairs is kept around so switching doesn't
+// show a blank loading state, and a failed background refresh doesn't wipe
+// out the last good data -- it just silently keeps showing it.
+export function useScoreboard(sportKey, dateParam) {
   const [dataByKey, setDataByKey] = useState({})
+  const cacheKey = `${sportKey}|${dateParam}`
 
   useEffect(() => {
     let cancelled = false
 
     async function load() {
-      const result = await fetchScoreboard(sportKey)
+      const result = await fetchScoreboard(sportKey, dateParam)
       if (cancelled) return
       setDataByKey((prev) => {
-        const existing = prev[sportKey]
+        const existing = prev[cacheKey]
         if (result.error && existing && !existing.error) return prev
         const games = tagScoreChanges(result.games, existing?.games)
-        return { ...prev, [sportKey]: { ...result, games, lastUpdated: Date.now() } }
+        return { ...prev, [cacheKey]: { ...result, games, lastUpdated: Date.now() } }
       })
     }
 
     load()
+
     const intervalId = setInterval(() => {
-      if (document.visibilityState === 'visible') load()
+      if (document.visibilityState === 'visible' && dateParam === todayParam()) load()
     }, REFRESH_INTERVAL_MS)
 
     function handleVisibilityChange() {
-      if (document.visibilityState === 'visible') load()
+      if (document.visibilityState === 'visible' && dateParam === todayParam()) load()
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
@@ -54,7 +58,7 @@ export function useScoreboard(sportKey) {
       clearInterval(intervalId)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [sportKey])
+  }, [sportKey, dateParam, cacheKey])
 
-  return dataByKey[sportKey]
+  return dataByKey[cacheKey]
 }

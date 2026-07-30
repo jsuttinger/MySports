@@ -77,6 +77,70 @@ body {
   color: var(--text);
 }
 
+/* Date strip */
+
+.date-strip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 20px;
+}
+
+.date-pill {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 42px;
+  padding: 8px 0 7px;
+  border-radius: 12px;
+  border: none;
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.date-pill:hover {
+  color: var(--text);
+}
+
+.date-pill--selected {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.date-pill__day {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.date-pill__date {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.date-pill__date--today {
+  font-weight: 800;
+}
+
+.date-pill__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.date-pill__dot--visible {
+  background: var(--text);
+}
+
 /* Last updated */
 
 .last-updated {
