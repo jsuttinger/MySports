@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { pickAccentColor } from '../utils/teamColor'
 import BaseDiamond from './BaseDiamond'
+import Chevron from './Chevron'
 import GameDetail from './GameDetail'
 
 const SCORE_FLASH_MS = 1400
@@ -99,21 +100,6 @@ function LiveDetail({ situation }) {
   )
 }
 
-function ExpandChevron({ expanded }) {
-  return (
-    <svg
-      className={`expand-chevron${expanded ? ' expand-chevron--expanded' : ''}`}
-      width="12"
-      height="12"
-      viewBox="0 0 12 12"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
 function TeamScoreCard({ game, sportKey, expanded, onToggle }) {
   const showScore = game.status !== 'scheduled'
   const isFinal = game.status === 'final'
@@ -167,7 +153,7 @@ function TeamScoreCard({ game, sportKey, expanded, onToggle }) {
         <span className="status-detail">
           {game.status === 'scheduled' ? formatStartTime(game.startTime) : game.statusDetail}
         </span>
-        <ExpandChevron expanded={expanded} />
+        <Chevron expanded={expanded} className="expand-chevron" />
       </div>
 
       <div className="game-card__teams">
@@ -183,7 +169,7 @@ function TeamScoreCard({ game, sportKey, expanded, onToggle }) {
         />
       </div>
 
-      {game.status === 'live' && <LiveDetail situation={game.situation} />}
+      {game.status === 'live' && !expanded && <LiveDetail situation={game.situation} />}
 
       {game.odds && (game.odds.spreadDetails || game.odds.overUnder != null) && (
         <div className="game-card__odds">

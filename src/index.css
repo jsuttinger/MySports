@@ -172,15 +172,18 @@ body {
   font-weight: 500;
 }
 
-.expand-chevron {
-  margin-left: auto;
+.chevron {
   flex: none;
-  color: var(--text-tertiary);
   transition: transform 0.2s ease;
 }
 
-.expand-chevron--expanded {
+.chevron--expanded {
   transform: rotate(180deg);
+}
+
+.expand-chevron {
+  margin-left: auto;
+  color: var(--text-tertiary);
 }
 
 /* Teams */
@@ -491,4 +494,92 @@ body {
   justify-content: space-between;
   gap: 12px;
   margin-top: 2px;
+}
+
+/* Full box score toggle */
+
+.full-box-toggle__button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px;
+  background: var(--surface-2);
+  border: none;
+  border-radius: 10px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.full-box-toggle__button:hover {
+  color: var(--text);
+}
+
+.full-box-toggle__content {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.full-box__team-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.full-box__section + .full-box__section {
+  margin-top: 10px;
+}
+
+.full-box__heading {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.full-box__table-wrap {
+  overflow-x: auto;
+}
+
+.full-box__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.full-box__table th,
+.full-box__table td {
+  padding: 4px 8px 4px 0;
+  text-align: center;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.full-box__table th {
+  font-weight: 600;
+  color: var(--text-tertiary);
+  font-size: 11px;
+}
+
+.full-box__name-col {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.full-box__table tbody tr + tr td {
+  border-top: 1px solid var(--border);
 }

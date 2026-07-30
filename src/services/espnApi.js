@@ -159,3 +159,42 @@ export async function fetchScoreboard(key) {
   if (!sport) throw new Error(`Unknown sport: ${key}`)
   return fetchSportScoreboard(sport)
 }
+
+const MLB_SUMMARY_URL = 'https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary'
+
+// ESPN's boxscore stat rows are keyed by human-readable label (e.g. "AB",
+// "ERA") rather than fixed positions, so pull values out by label name —
+// robust to ESPN reordering or adding columns.
+function parseBoxScoreCategory(category) {
+  const labels = category?.labels ?? []
+  return (category?.athletes ?? []).map((entry) => {
+    const stats = {}
+    labels.forEach((label, i) => {
+      stats[label] = entry.stats?.[i] ?? null
+    })
+    return { name: entry.athlete?.shortName ?? entry.athlete?.displayName ?? 'Unknown', stats }
+  })
+}
+
+function parseBoxScoreTeam(teamEntry) {
+  const batting = teamEntry.statistics?.find((s) => s.type === 'batting')
+  const pitching = teamEntry.statistics?.find((s) => s.type === 'pitching')
+  return {
+    abbreviation: teamEntry.team?.abbreviation ?? '',
+    batting: parseBoxScoreCategory(batting),
+    pitching: parseBoxScoreCategory(pitching),
+  }
+}
+
+// Full player-level box score for one MLB game, fetched lazily (only when
+// the user actually opens it) from ESPN's per-event summary endpoint —
+// the scoreboard endpoint only has team-level totals, not per-player lines.
+export async function fetchMlbBoxScore(eventId) {
+  const response = await fetch(`${MLB_SUMMARY_URL}?event=${eventId}`)
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} ${response.statusText}`)
+  }
+  const json = await response.json()
+  const teams = json.boxscore?.players ?? []
+  return teams.map(parseBoxScoreTeam)
+}
