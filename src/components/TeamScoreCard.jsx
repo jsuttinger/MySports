@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { pickAccentColor } from '../utils/teamColor'
+import BaseDiamond from './BaseDiamond'
+import GameDetail from './GameDetail'
 
 const SCORE_FLASH_MS = 1400
 
@@ -58,16 +60,6 @@ function TeamRow({ team, showScore, muted }) {
   )
 }
 
-function BaseDiamond({ onFirst, onSecond, onThird }) {
-  return (
-    <span className="diamond" title="Runners on base">
-      <span className={`diamond__base diamond__base--second${onSecond ? ' diamond__base--on' : ''}`} />
-      <span className={`diamond__base diamond__base--third${onThird ? ' diamond__base--on' : ''}`} />
-      <span className={`diamond__base diamond__base--first${onFirst ? ' diamond__base--on' : ''}`} />
-    </span>
-  )
-}
-
 function LiveDetail({ situation }) {
   if (!situation) return null
 
@@ -107,11 +99,27 @@ function LiveDetail({ situation }) {
   )
 }
 
-function TeamScoreCard({ game }) {
+function ExpandChevron({ expanded }) {
+  return (
+    <svg
+      className={`expand-chevron${expanded ? ' expand-chevron--expanded' : ''}`}
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function TeamScoreCard({ game, sportKey, expanded, onToggle }) {
   const showScore = game.status !== 'scheduled'
   const isFinal = game.status === 'final'
   const hasWinner = game.home.winner || game.away.winner
   const accent = pickAccentColor(game)
+  const cardRef = useRef(null)
 
   const [flashing, setFlashing] = useState(false)
   useEffect(() => {
@@ -121,10 +129,33 @@ function TeamScoreCard({ game }) {
     return () => clearTimeout(timeout)
   }, [game.scoreChangedAt])
 
+  // "Tap elsewhere to collapse": while this card is expanded, any click
+  // outside it collapses it. Clicks on the card itself are handled by its
+  // own onClick toggle below, so this only ever fires for outside clicks.
+  useEffect(() => {
+    if (!expanded) return
+    function handleOutsideClick(event) {
+      if (cardRef.current && !cardRef.current.contains(event.target)) onToggle()
+    }
+    document.addEventListener('click', handleOutsideClick, true)
+    return () => document.removeEventListener('click', handleOutsideClick, true)
+  }, [expanded, onToggle])
+
   return (
     <article
+      ref={cardRef}
       className={`game-card game-card--${game.status}${flashing ? ' game-card--flash' : ''}`}
       style={{ '--accent': accent }}
+      onClick={onToggle}
+      role="button"
+      tabIndex={0}
+      aria-expanded={expanded}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onToggle()
+        }
+      }}
     >
       <div className="game-card__status">
         {game.status === 'live' && (
@@ -136,6 +167,7 @@ function TeamScoreCard({ game }) {
         <span className="status-detail">
           {game.status === 'scheduled' ? formatStartTime(game.startTime) : game.statusDetail}
         </span>
+        <ExpandChevron expanded={expanded} />
       </div>
 
       <div className="game-card__teams">
@@ -159,6 +191,12 @@ function TeamScoreCard({ game }) {
           {game.odds.overUnder != null && <span>O/U {game.odds.overUnder}</span>}
         </div>
       )}
+
+      <div className={`game-detail-wrapper${expanded ? ' game-detail-wrapper--expanded' : ''}`}>
+        <div className="game-detail-inner">
+          <GameDetail sportKey={sportKey} game={game} />
+        </div>
+      </div>
     </article>
   )
 }

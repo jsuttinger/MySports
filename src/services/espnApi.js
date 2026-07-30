@@ -41,6 +41,10 @@ function normalizeStatus(state) {
 
 function parseTeam(competitor) {
   const team = competitor?.team ?? {}
+  const record = competitor?.records?.find((r) => r.type === 'total')?.summary ?? null
+  const probablePitcher =
+    competitor?.probables?.find((p) => p.name === 'probableStartingPitcher')?.athlete?.fullName ?? null
+
   return {
     name: team.displayName ?? team.name ?? 'Unknown',
     abbreviation: team.abbreviation ?? '',
@@ -50,6 +54,11 @@ function parseTeam(competitor) {
     logo: team.logo ?? team.logos?.[0]?.href ?? null,
     color: team.color ? `#${team.color}` : null,
     alternateColor: team.alternateColor ? `#${team.alternateColor}` : null,
+    record,
+    hits: competitor?.hits ?? null,
+    errors: competitor?.errors ?? null,
+    linescores: (competitor?.linescores ?? []).map((ls) => ({ period: ls.period, display: ls.displayValue })),
+    probablePitcher,
   }
 }
 
@@ -65,9 +74,18 @@ function parseOdds(competition) {
 
 const DOWN_NAMES = { 1: '1st', 2: '2nd', 3: '3rd', 4: '4th' }
 
-// The live "situation" object varies by sport: baseball has balls/strikes/outs
-// and base runners, football has down/distance/possession. Everything here is
-// optional — a sport that doesn't provide a field just won't render it.
+function parseAthleteAtBat(entry) {
+  if (!entry?.athlete) return null
+  return {
+    name: entry.athlete.fullName ?? entry.athlete.displayName ?? null,
+    summary: entry.summary ?? null,
+  }
+}
+
+// The live "situation" object varies by sport: baseball has balls/strikes/outs,
+// base runners, and the current batter/pitcher; football has down/distance/
+// possession. Everything here is optional — a sport that doesn't provide a
+// field just won't render it.
 function parseSituation(competition) {
   const situation = competition?.situation
   if (!situation) return null
@@ -89,6 +107,8 @@ function parseSituation(competition) {
     onFirst: situation.onFirst ?? false,
     onSecond: situation.onSecond ?? false,
     onThird: situation.onThird ?? false,
+    batter: parseAthleteAtBat(situation.batter),
+    pitcher: parseAthleteAtBat(situation.pitcher),
   }
 }
 

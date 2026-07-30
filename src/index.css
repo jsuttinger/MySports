@@ -111,10 +111,16 @@ body {
   border-radius: 16px;
   padding: 18px 20px 18px 18px;
   transition: background 0.15s ease;
+  cursor: pointer;
 }
 
 .game-card:hover {
   background: var(--surface-2);
+}
+
+.game-card:focus-visible {
+  outline: 2px solid var(--text-tertiary);
+  outline-offset: 2px;
 }
 
 .game-card--final {
@@ -164,6 +170,17 @@ body {
   font-size: 13px;
   color: var(--text-secondary);
   font-weight: 500;
+}
+
+.expand-chevron {
+  margin-left: auto;
+  flex: none;
+  color: var(--text-tertiary);
+  transition: transform 0.2s ease;
+}
+
+.expand-chevron--expanded {
+  transform: rotate(180deg);
 }
 
 /* Teams */
@@ -284,32 +301,63 @@ body {
 
 .diamond {
   position: relative;
+  flex: none;
+}
+
+.diamond--small {
   width: 24px;
   height: 24px;
-  flex: none;
+}
+
+.diamond--large {
+  width: 44px;
+  height: 44px;
 }
 
 .diamond__base {
   position: absolute;
-  width: 7px;
-  height: 7px;
-  background: var(--border);
+  background: color-mix(in srgb, var(--text) 22%, transparent);
   transform: rotate(45deg);
   border-radius: 1px;
 }
 
-.diamond__base--second {
+.diamond--small .diamond__base {
+  width: 7px;
+  height: 7px;
+}
+
+.diamond--large .diamond__base {
+  width: 12px;
+  height: 12px;
+}
+
+.diamond--small .diamond__base--second {
   top: 0;
   left: 8px;
 }
 
-.diamond__base--third {
+.diamond--small .diamond__base--third {
   bottom: 3px;
   left: 0;
 }
 
-.diamond__base--first {
+.diamond--small .diamond__base--first {
   bottom: 3px;
+  right: 0;
+}
+
+.diamond--large .diamond__base--second {
+  top: 0;
+  left: 16px;
+}
+
+.diamond--large .diamond__base--third {
+  bottom: 6px;
+  left: 0;
+}
+
+.diamond--large .diamond__base--first {
+  bottom: 6px;
   right: 0;
 }
 
@@ -328,4 +376,118 @@ body {
   font-size: 12px;
   color: var(--text-secondary);
   font-weight: 500;
+}
+
+/* Expandable game detail */
+
+.game-detail-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s ease;
+}
+
+.game-detail-wrapper--expanded {
+  grid-template-rows: 1fr;
+}
+
+.game-detail-inner {
+  overflow: hidden;
+}
+
+.game-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.game-detail__note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.game-detail__placeholder {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+.detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.detail-row__label {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.detail-row__value {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* Box score */
+
+.box-score {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.box-score th,
+.box-score td {
+  padding: 4px 6px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.box-score th {
+  font-weight: 600;
+  color: var(--text-tertiary);
+  font-size: 11px;
+}
+
+.box-score th:first-child,
+.box-score__team {
+  text-align: left;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.box-score th:nth-last-child(-n + 3),
+.box-score td:nth-last-child(-n + 3) {
+  font-weight: 700;
+  color: var(--text);
+  border-left: 1px solid var(--border);
+}
+
+.box-score tbody tr + tr td {
+  border-top: 1px solid var(--border);
+}
+
+/* At bat */
+
+.at-bat {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.at-bat__count-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 2px;
 }

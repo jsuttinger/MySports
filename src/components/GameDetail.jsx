@@ -1,0 +1,11 @@
+import MlbGameDetail from './MlbGameDetail'
+import GenericGameDetail from './GenericGameDetail'
+
+// Sport-aware dispatcher: add a case here (and a matching component) to
+// build out a real detail view for another sport later.
+function GameDetail({ sportKey, game }) {
+  if (sportKey === 'mlb') return <MlbGameDetail game={game} />
+  return <GenericGameDetail game={game} />
+}
+
+export default GameDetail
