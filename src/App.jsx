@@ -6,11 +6,33 @@ import SportTab from './components/SportTab'
 import DateStrip from './components/DateStrip'
 import GameList from './components/GameList'
 import LastUpdated from './components/LastUpdated'
+import NavPreviewSwitcher from './components/NavPreviewSwitcher'
+import BottomTabBar from './components/BottomTabBar'
+import HamburgerMenu from './components/HamburgerMenu'
+
+const NAV_PREVIEW_KEY = 'mysports:navPreview'
 
 function App() {
   const [activeSport, setActiveSport] = useState(SPORTS[0].key)
   const [today, setToday] = useState(() => todayParam())
   const [selectedDate, setSelectedDate] = useState(today)
+
+  // TEMPORARY: which nav style to preview alongside the existing top tabs.
+  // Persisted so the choice survives a refresh while comparing.
+  const [navPreview, setNavPreview] = useState(() => {
+    try {
+      return localStorage.getItem(NAV_PREVIEW_KEY) || 'top'
+    } catch {
+      return 'top'
+    }
+  })
+  useEffect(() => {
+    try {
+      localStorage.setItem(NAV_PREVIEW_KEY, navPreview)
+    } catch {
+      // ignore (private browsing, storage disabled, etc.)
+    }
+  }, [navPreview])
 
   // The calendar day can roll over while the app is open (backgrounded
   // overnight, or just left open past midnight). Re-check on every return
@@ -43,10 +65,15 @@ function App() {
   const sportData = useScoreboard(activeSport, selectedDate)
 
   return (
-    <div className="app">
+    <div className={`app${navPreview === 'bottom' ? ' app--bottom-nav' : ''}`}>
       <header className="app-header">
         <h1>MySports</h1>
+        {navPreview === 'hamburger' && (
+          <HamburgerMenu sports={SPORTS} activeSport={activeSport} onSelect={setActiveSport} />
+        )}
       </header>
+
+      <NavPreviewSwitcher value={navPreview} onChange={setNavPreview} />
 
       <nav className="sport-tabs">
         {SPORTS.map((sport) => (
@@ -67,6 +94,10 @@ function App() {
         {!sportData && <p className="state-message">Loading scores…</p>}
         {sportData && <GameList sport={sportData} />}
       </main>
+
+      {navPreview === 'bottom' && (
+        <BottomTabBar sports={SPORTS} activeSport={activeSport} onSelect={setActiveSport} />
+      )}
     </div>
   )
 }
