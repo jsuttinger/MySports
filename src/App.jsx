@@ -5,7 +5,7 @@ import { todayParam } from './utils/date'
 import DateStrip from './components/DateStrip'
 import GameList from './components/GameList'
 import LastUpdated from './components/LastUpdated'
-import HamburgerMenu from './components/HamburgerMenu'
+import BottomTabBar from './components/BottomTabBar'
 
 function App() {
   const [activeSport, setActiveSport] = useState(SPORTS[0].key)
@@ -43,10 +43,9 @@ function App() {
   const sportData = useScoreboard(activeSport, selectedDate)
 
   return (
-    <div className="app">
+    <div className="app app--bottom-nav">
       <header className="app-header">
         <h1>MySports</h1>
-        <HamburgerMenu sports={SPORTS} activeSport={activeSport} onSelect={setActiveSport} />
       </header>
 
       <DateStrip selectedDate={selectedDate} today={today} onSelect={setSelectedDate} />
@@ -57,6 +56,8 @@ function App() {
         {!sportData && <p className="state-message">Loading scores…</p>}
         {sportData && <GameList sport={sportData} />}
       </main>
+
+      <BottomTabBar sports={SPORTS} activeSport={activeSport} onSelect={setActiveSport} />
     </div>
   )
 }
