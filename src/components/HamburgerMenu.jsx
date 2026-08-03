@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-// OPTION B (nav preview): hamburger button in the header opening a dropdown.
+// Header hamburger button opening a dropdown of sport leagues.
 function HamburgerMenu({ sports, activeSport, onSelect }) {
   const [open, setOpen] = useState(false)
   const wrapperRef = useRef(null)
@@ -43,7 +43,13 @@ function HamburgerMenu({ sports, activeSport, onSelect }) {
                 setOpen(false)
               }}
             >
-              {sport.label}
+              <img
+                className="hamburger-menu__item-logo"
+                src={sport.logo}
+                alt=""
+                aria-hidden="true"
+              />
+              <span>{sport.label}</span>
             </button>
           ))}
         </div>

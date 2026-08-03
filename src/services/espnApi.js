@@ -8,21 +8,25 @@ export const SPORTS = [
     key: 'nfl',
     label: 'NFL',
     url: 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard',
+    logo: 'https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png',
   },
   {
     key: 'nba',
     label: 'NBA',
     url: 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard',
+    logo: 'https://a.espncdn.com/i/teamlogos/leagues/500/nba.png',
   },
   {
     key: 'mlb',
     label: 'MLB',
     url: 'https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard',
+    logo: 'https://a.espncdn.com/i/teamlogos/leagues/500/mlb.png',
   },
   {
     key: 'nhl',
     label: 'NHL',
     url: 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard',
+    logo: 'https://a.espncdn.com/i/teamlogos/leagues/500/nhl.png',
   },
 ]
 
