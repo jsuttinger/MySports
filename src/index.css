@@ -1,11 +1,11 @@
 :root {
-  --bg: #0a0a0a;
-  --surface: #1a1a1a;
-  --surface-2: #242424;
-  --border: #2a2a2a;
+  --bg: #121214;
+  --surface: #1e1e23;
+  --surface-2: #2b2b32;
+  --border: #3a3a42;
   --text: #f5f5f7;
-  --text-secondary: #98989d;
-  --text-tertiary: #6e6e73;
+  --text-secondary: #b8b8c2;
+  --text-tertiary: #8c8c95;
   --live: #ff453a;
   color-scheme: dark;
 }
@@ -18,8 +18,8 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(1100px 550px at 50% -8%, rgba(120, 130, 255, 0.16), transparent 68%),
-    linear-gradient(180deg, #1c1c26 0%, var(--bg) 55%);
+    radial-gradient(1100px 550px at 50% -8%, rgba(130, 140, 255, 0.2), transparent 68%),
+    linear-gradient(180deg, #26262f 0%, var(--bg) 55%);
   background-attachment: fixed;
   color: var(--text);
   font-family:
@@ -221,7 +221,7 @@ body {
 }
 
 .game-card--final {
-  opacity: 0.6;
+  opacity: 0.92;
 }
 
 .game-card--live {
