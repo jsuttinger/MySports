@@ -6,6 +6,7 @@ import DateStrip from './components/DateStrip'
 import GameList from './components/GameList'
 import LastUpdated from './components/LastUpdated'
 import BottomTabBar from './components/BottomTabBar'
+import PullToRefresh from './components/PullToRefresh'
 
 function App() {
   const [activeSport, setActiveSport] = useState(SPORTS[0].key)
@@ -40,22 +41,24 @@ function App() {
     }
   }, [])
 
-  const sportData = useScoreboard(activeSport, selectedDate)
+  const { sportData, refresh } = useScoreboard(activeSport, selectedDate)
 
   return (
     <div className="app app--bottom-nav">
-      <header className="app-header">
-        <h1>MySports</h1>
-      </header>
+      <PullToRefresh onRefresh={refresh}>
+        <header className="app-header">
+          <h1>MySports</h1>
+        </header>
 
-      <DateStrip selectedDate={selectedDate} today={today} onSelect={setSelectedDate} />
+        <DateStrip selectedDate={selectedDate} today={today} onSelect={setSelectedDate} />
 
-      <LastUpdated timestamp={sportData?.lastUpdated} />
+        <LastUpdated timestamp={sportData?.lastUpdated} />
 
-      <main>
-        {!sportData && <p className="state-message">Loading scores…</p>}
-        {sportData && <GameList sport={sportData} />}
-      </main>
+        <main>
+          {!sportData && <p className="state-message">Loading scores…</p>}
+          {sportData && <GameList sport={sportData} />}
+        </main>
+      </PullToRefresh>
 
       <BottomTabBar sports={SPORTS} activeSport={activeSport} onSelect={setActiveSport} />
     </div>

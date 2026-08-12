@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { fetchScoreboard } from '../services/espnApi'
 import { todayParam } from '../utils/date'
 
@@ -24,41 +24,40 @@ function tagScoreChanges(games, previousGames) {
 // previously viewed sport/date pairs is kept around so switching doesn't
 // show a blank loading state, and a failed background refresh doesn't wipe
 // out the last good data -- it just silently keeps showing it.
+//
+// `refresh` is the same fetch, exposed so callers (e.g. pull-to-refresh) can
+// trigger one on demand and await its completion.
 export function useScoreboard(sportKey, dateParam) {
   const [dataByKey, setDataByKey] = useState({})
   const cacheKey = `${sportKey}|${dateParam}`
 
+  const refresh = useCallback(async () => {
+    const result = await fetchScoreboard(sportKey, dateParam)
+    setDataByKey((prev) => {
+      const existing = prev[cacheKey]
+      if (result.error && existing && !existing.error) return prev
+      const games = tagScoreChanges(result.games, existing?.games)
+      return { ...prev, [cacheKey]: { ...result, games, lastUpdated: Date.now() } }
+    })
+  }, [sportKey, dateParam, cacheKey])
+
   useEffect(() => {
-    let cancelled = false
-
-    async function load() {
-      const result = await fetchScoreboard(sportKey, dateParam)
-      if (cancelled) return
-      setDataByKey((prev) => {
-        const existing = prev[cacheKey]
-        if (result.error && existing && !existing.error) return prev
-        const games = tagScoreChanges(result.games, existing?.games)
-        return { ...prev, [cacheKey]: { ...result, games, lastUpdated: Date.now() } }
-      })
-    }
-
-    load()
+    refresh()
 
     const intervalId = setInterval(() => {
-      if (document.visibilityState === 'visible' && dateParam === todayParam()) load()
+      if (document.visibilityState === 'visible' && dateParam === todayParam()) refresh()
     }, REFRESH_INTERVAL_MS)
 
     function handleVisibilityChange() {
-      if (document.visibilityState === 'visible' && dateParam === todayParam()) load()
+      if (document.visibilityState === 'visible' && dateParam === todayParam()) refresh()
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
-      cancelled = true
       clearInterval(intervalId)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [sportKey, dateParam, cacheKey])
+  }, [refresh, dateParam])
 
-  return dataByKey[cacheKey]
+  return { sportData: dataByKey[cacheKey], refresh }
 }

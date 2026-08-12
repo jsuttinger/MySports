@@ -40,6 +40,36 @@ body {
   padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
 }
 
+/* Pull to refresh */
+
+.pull-refresh-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: height 0.2s ease, opacity 0.2s ease;
+}
+
+.pull-refresh-spinner {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  border-top-color: var(--text-secondary);
+  box-sizing: border-box;
+}
+
+.pull-refresh-spinner--spinning {
+  animation: pull-refresh-spin 0.7s linear infinite;
+}
+
+@keyframes pull-refresh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .app-header {
   display: flex;
   align-items: flex-start;
