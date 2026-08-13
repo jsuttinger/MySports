@@ -15,8 +15,10 @@ const SCORING_SUMMARY_EMPTY_MESSAGE = {
 // NFL, NCAAF, and NHL get a real Scoring Summary (fetched on expand);
 // everything else here just surfaces data the shared espnApi parser already
 // extracts for every sport — no other sport-specific parsing added here.
+// Team records are already shown inline under each team's name in the card
+// header (visible whether or not this is expanded), so they aren't repeated
+// here.
 function GenericGameDetail({ game, sportKey, expanded }) {
-  const hasRecords = game.away.record || game.home.record
   const hasLastPlay = Boolean(game.situation?.lastPlay)
   const hasPossession = Boolean(game.situation?.downDistance)
 
@@ -40,16 +42,10 @@ function GenericGameDetail({ game, sportKey, expanded }) {
       .finally(() => setLoading(false))
   }, [supportsScoringSummary, expanded, sportKey, game.id])
 
-  const hasOtherInfo = hasRecords || hasPossession || hasLastPlay
+  const hasOtherInfo = hasPossession || hasLastPlay
 
   return (
     <div className="game-detail">
-      {hasRecords && (
-        <DetailRow
-          label="Record"
-          value={`${game.away.abbreviation} ${game.away.record ?? '—'}   ·   ${game.home.abbreviation} ${game.home.record ?? '—'}`}
-        />
-      )}
       {hasPossession && (
         <DetailRow
           label="Situation"

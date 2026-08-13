@@ -40,7 +40,9 @@ function normalizeStatus(state) {
 
 function parseTeam(competitor) {
   const team = competitor?.team ?? {}
-  const record = competitor?.records?.find((r) => r.type === 'total')?.summary ?? null
+  // ESPN's "overall" record entry is typed 'total' for most sports, but
+  // 'ytd' for NHL -- same meaning, different label.
+  const record = competitor?.records?.find((r) => r.type === 'total' || r.type === 'ytd')?.summary ?? null
   const probablePitcher =
     competitor?.probables?.find((p) => p.name === 'probableStartingPitcher')?.athlete?.fullName ?? null
 
@@ -144,8 +146,18 @@ function parseEvent(event) {
   }
 }
 
+// ESPN tags each event with a season type (1 = preseason, 2 = regular
+// season, 3 = postseason). We only ever want games that count -- drop
+// preseason here, once, so every consumer (main feed, date strip, all
+// sports) sees a preseason-free list without having to filter it itself.
+// An event with no season info at all is left in rather than risk hiding a
+// real game over a missing field.
+function isPreseason(event) {
+  return event.season?.type === 1
+}
+
 function parseScoreboard(json) {
-  return (json.events ?? []).map(parseEvent)
+  return (json.events ?? []).filter((event) => !isPreseason(event)).map(parseEvent)
 }
 
 async function fetchSportScoreboard({ key, label, url: baseUrl }, dateParam) {

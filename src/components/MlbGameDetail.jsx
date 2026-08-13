@@ -76,9 +76,11 @@ function AtBat({ situation }) {
   )
 }
 
+// Team records are already shown inline under each team's name in the card
+// header (visible whether or not this is expanded), so they aren't repeated
+// here.
 function ScheduledInfo({ game }) {
   const hasProbables = game.away.probablePitcher || game.home.probablePitcher
-  const hasRecords = game.away.record || game.home.record
 
   return (
     <>
@@ -88,13 +90,7 @@ function ScheduledInfo({ game }) {
           <DetailRow label={`${game.home.abbreviation} probable`} value={game.home.probablePitcher ?? 'TBD'} />
         </>
       )}
-      {hasRecords && (
-        <DetailRow
-          label="Record"
-          value={`${game.away.abbreviation} ${game.away.record ?? '—'}   ·   ${game.home.abbreviation} ${game.home.record ?? '—'}`}
-        />
-      )}
-      {!hasProbables && !hasRecords && <p className="game-detail__placeholder">No additional info yet.</p>}
+      {!hasProbables && <p className="game-detail__placeholder">No additional info yet.</p>}
     </>
   )
 }
