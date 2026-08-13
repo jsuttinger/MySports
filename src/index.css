@@ -618,8 +618,12 @@ body {
 .box-score td {
   padding: 4px 6px;
   text-align: center;
-  color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
+}
+
+.box-score td {
+  color: var(--text);
+  font-weight: 600;
 }
 
 .box-score th {
@@ -629,7 +633,7 @@ body {
 }
 
 .box-score th:first-child,
-.box-score__team {
+td.box-score__team {
   text-align: left;
   font-weight: 700;
   color: var(--text);
@@ -735,9 +739,13 @@ body {
 .full-box__table td {
   padding: 4px 8px 4px 0;
   text-align: center;
-  color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.full-box__table td {
+  color: var(--text);
+  font-weight: 600;
 }
 
 .full-box__table th {
