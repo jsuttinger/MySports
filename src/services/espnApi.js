@@ -11,10 +11,10 @@ export const SPORTS = [
     logo: 'https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png',
   },
   {
-    key: 'nba',
-    label: 'NBA',
-    url: 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard',
-    logo: 'https://a.espncdn.com/i/teamlogos/leagues/500/nba.png',
+    key: 'ncaaf',
+    label: 'NCAAF',
+    url: 'https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard',
+    logo: 'https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-football-college.png',
   },
   {
     key: 'mlb',
@@ -252,12 +252,13 @@ export async function fetchMlbGameSummary(eventId) {
 
 const SCORING_SUMMARY_URLS = {
   nfl: 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary',
+  ncaaf: 'https://site.api.espn.com/apis/site/v2/sports/football/college-football/summary',
   nhl: 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary',
 }
 
-// NFL quarters/OT: period.number has no displayValue on this endpoint (unlike
-// NHL), so format it ourselves. Regulation is 4 quarters; anything past that
-// is overtime.
+// NFL/NCAAF quarters/OT: period.number has no displayValue on this endpoint
+// (unlike NHL), so format it ourselves. Regulation is 4 quarters; anything
+// past that is overtime.
 function formatFootballPeriodLabel(period) {
   if (!period?.number) return ''
   if (period.number <= 4) return `${ordinal(period.number)} Quarter`
@@ -265,10 +266,10 @@ function formatFootballPeriodLabel(period) {
   return otNumber <= 1 ? 'Overtime' : `${ordinal(otNumber)} Overtime`
 }
 
-// NFL's summary endpoint pre-filters scoring plays into their own top-level
-// array (unlike MLB/NHL, which flag individual entries in the full `plays`
-// list) — different shape, same idea.
-function parseNflScoringPlays(json) {
+// Both NFL and NCAAF's summary endpoints pre-filter scoring plays into their
+// own top-level array (unlike MLB/NHL, which flag individual entries in the
+// full `plays` list) — same shape for both.
+function parseFootballScoringPlays(json) {
   return (json.scoringPlays ?? []).map((play) => ({
     id: play.id,
     inningLabel: formatFootballPeriodLabel(play.period),
@@ -304,7 +305,7 @@ export async function fetchScoringPlays(sportKey, eventId) {
   }
   const json = await response.json()
 
-  if (sportKey === 'nfl') return parseNflScoringPlays(json)
+  if (sportKey === 'nfl' || sportKey === 'ncaaf') return parseFootballScoringPlays(json)
   if (sportKey === 'nhl') return parseNhlScoringPlays(json)
   return []
 }

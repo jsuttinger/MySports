@@ -4,16 +4,17 @@ import ScoringSummary from './ScoringSummary'
 import { fetchScoringPlays } from '../services/espnApi'
 
 // Sports with a real scoring-play feed available (see espnApi.fetchScoringPlays).
-// Others (e.g. NBA) just get the generic record/situation info below.
+// Others just get the generic record/situation info below.
 const SCORING_SUMMARY_EMPTY_MESSAGE = {
   nfl: 'No scoring yet.',
+  ncaaf: 'No scoring yet.',
   nhl: 'No goals scored yet.',
 }
 
-// Placeholder detail view for sports without a full dedicated one yet (NBA).
-// NFL and NHL get a real Scoring Summary (fetched on expand); everything
-// else here just surfaces data the shared espnApi parser already extracts
-// for every sport — no other sport-specific parsing added here.
+// Placeholder detail view for sports without a full dedicated one yet.
+// NFL, NCAAF, and NHL get a real Scoring Summary (fetched on expand);
+// everything else here just surfaces data the shared espnApi parser already
+// extracts for every sport — no other sport-specific parsing added here.
 function GenericGameDetail({ game, sportKey, expanded }) {
   const hasRecords = game.away.record || game.home.record
   const hasLastPlay = Boolean(game.situation?.lastPlay)
