@@ -5,7 +5,7 @@ import DetailRow from './DetailRow'
 import ScoringSummary from './ScoringSummary'
 import { fetchMlbGameSummary } from '../services/espnApi'
 
-const BATTING_COLUMNS = ['AB', 'R', 'H', 'RBI', 'BB', 'K']
+const BATTING_COLUMNS = ['AB', 'R', 'H', 'RBI', 'HR', 'BB', 'K']
 const PITCHING_COLUMNS = ['IP', 'H', 'R', 'ER', 'BB', 'K', 'ERA']
 
 function BoxScore({ away, home }) {
