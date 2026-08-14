@@ -47,6 +47,7 @@ function parseTeam(competitor) {
     competitor?.probables?.find((p) => p.name === 'probableStartingPitcher')?.athlete?.fullName ?? null
 
   return {
+    id: team.id ?? null,
     name: team.displayName ?? team.name ?? 'Unknown',
     abbreviation: team.abbreviation ?? '',
     score: competitor?.score ?? null,
@@ -320,4 +321,46 @@ export async function fetchScoringPlays(sportKey, eventId) {
   if (sportKey === 'nfl' || sportKey === 'ncaaf') return parseFootballScoringPlays(json)
   if (sportKey === 'nhl') return parseNhlScoringPlays(json)
   return []
+}
+
+// Cached per sport for the session -- the team list doesn't change while the
+// app is open, and the favorites screen may be opened more than once.
+const teamsCache = {}
+
+// Full team roster for a sport (for the favorites picker), fetched from
+// ESPN's teams endpoint -- same base path as the scoreboard, just swapping
+// the last segment. `limit=999` avoids ESPN's default 50-per-page cap
+// (college football alone has 750+ teams across every division).
+export async function fetchTeams(sportKey) {
+  if (teamsCache[sportKey]) return teamsCache[sportKey]
+
+  const sport = SPORTS.find((s) => s.key === sportKey)
+  if (!sport) throw new Error(`Unknown sport: ${sportKey}`)
+
+  const promise = (async () => {
+    const url = `${sport.url.replace('/scoreboard', '/teams')}?limit=999`
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} ${response.statusText}`)
+    }
+    const json = await response.json()
+    const entries = json.sports?.[0]?.leagues?.[0]?.teams ?? []
+    return entries
+      .map((entry) => entry.team)
+      .filter(Boolean)
+      .map((team) => ({
+        id: team.id,
+        name: team.displayName ?? team.name ?? 'Unknown',
+        abbreviation: team.abbreviation ?? '',
+        logo: team.logos?.[0]?.href ?? null,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  })()
+
+  // Don't cache a failed fetch -- let a later attempt retry.
+  promise.catch(() => {
+    delete teamsCache[sportKey]
+  })
+  teamsCache[sportKey] = promise
+  return promise
 }

@@ -3,6 +3,7 @@ import { pickAccentColor } from '../utils/teamColor'
 import BaseDiamond from './BaseDiamond'
 import Chevron from './Chevron'
 import GameDetail from './GameDetail'
+import PinIcon from './PinIcon'
 
 const SCORE_FLASH_MS = 1400
 
@@ -106,7 +107,7 @@ function LiveDetail({ situation }) {
   )
 }
 
-function TeamScoreCard({ game, sportKey, expanded, onToggle }) {
+function TeamScoreCard({ game, sportKey, expanded, onToggle, pinned, onTogglePin }) {
   const showScore = game.status !== 'scheduled'
   const isFinal = game.status === 'final'
   const hasWinner = game.home.winner || game.away.winner
@@ -157,7 +158,7 @@ function TeamScoreCard({ game, sportKey, expanded, onToggle }) {
   return (
     <article
       ref={cardRef}
-      className={`game-card game-card--${game.status}${flashing ? ' game-card--flash' : ''}`}
+      className={`game-card game-card--${game.status}${flashing ? ' game-card--flash' : ''}${pinned ? ' game-card--pinned' : ''}`}
       style={{ '--accent': accent, '--home-glow': homeGlow, '--away-glow': awayGlow }}
       onClick={onToggle}
       role="button"
@@ -180,7 +181,23 @@ function TeamScoreCard({ game, sportKey, expanded, onToggle }) {
         <span className="status-detail">
           {game.status === 'scheduled' ? formatStartTime(game.startTime) : game.statusDetail}
         </span>
-        <Chevron expanded={expanded} className="expand-chevron" />
+        <span className="game-card__status-actions">
+          {onTogglePin && (
+            <button
+              type="button"
+              className={`pin-button${pinned ? ' pin-button--active' : ''}`}
+              onClick={(event) => {
+                event.stopPropagation()
+                onTogglePin()
+              }}
+              aria-pressed={pinned}
+              aria-label={pinned ? 'Unpin game' : 'Pin game to top'}
+            >
+              <PinIcon pinned={pinned} />
+            </button>
+          )}
+          <Chevron expanded={expanded} className="expand-chevron" />
+        </span>
       </div>
 
       <div className="game-card__teams">

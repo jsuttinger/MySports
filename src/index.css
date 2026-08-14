@@ -7,6 +7,7 @@
   --text-secondary: #b8b8c2;
   --text-tertiary: #8c8c95;
   --live: #ff453a;
+  --pin: #ffd60a;
   color-scheme: dark;
 }
 
@@ -82,6 +83,24 @@ body {
   font-size: 28px;
   font-weight: 700;
   letter-spacing: -0.3px;
+  color: var(--text);
+}
+
+.icon-button {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.icon-button:hover {
   color: var(--text);
 }
 
@@ -331,8 +350,37 @@ body {
 }
 
 .expand-chevron {
-  margin-left: auto;
   color: var(--text-tertiary);
+}
+
+.game-card__status-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.pin-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+
+.pin-button:hover {
+  color: var(--text-secondary);
+}
+
+.pin-button--active {
+  color: var(--pin);
+}
+
+.game-card--pinned {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--pin) 50%, transparent);
 }
 
 /* Teams */
@@ -775,4 +823,182 @@ td.box-score__team {
 
 .full-box__table tbody tr + tr td {
   border-top: 1px solid var(--border);
+}
+
+/* Favorites screen */
+
+.favorites-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  padding: 40px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+}
+
+.favorites-screen__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.favorites-screen__header h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  color: var(--text);
+}
+
+.favorites-screen__close {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.favorites-screen__close:hover {
+  color: var(--text);
+}
+
+.favorites-screen__search {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.favorites-screen__search::placeholder {
+  color: var(--text-tertiary);
+}
+
+.favorites-screen__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.favorites-sport-group {
+  border-radius: 14px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.favorites-sport-group__header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.favorites-sport-group__logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex: none;
+  background: #e4e4e8;
+  opacity: 0.96;
+  border-radius: 50%;
+  padding: 3px;
+  box-sizing: border-box;
+}
+
+.favorites-sport-group__label {
+  flex: 1;
+  text-align: left;
+}
+
+.favorites-sport-group__chevron {
+  flex: none;
+  width: 18px;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.favorites-sport-group__teams {
+  display: flex;
+  flex-direction: column;
+  padding: 0 6px 6px;
+}
+
+.favorite-team-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.favorite-team-row:hover {
+  background: var(--surface-2);
+}
+
+.favorite-team-row--active {
+  color: var(--text);
+}
+
+.favorite-team-row__logo {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  flex: none;
+  background: #e4e4e8;
+  opacity: 0.96;
+  border-radius: 50%;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.favorite-team-row__logo--fallback {
+  background: var(--surface-2);
+}
+
+.favorite-team-row__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.favorite-team-row__star {
+  flex: none;
+  color: var(--text-tertiary);
+}
+
+.favorite-team-row--active .favorite-team-row__star {
+  color: var(--pin);
 }

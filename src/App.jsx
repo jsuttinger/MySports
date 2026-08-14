@@ -1,17 +1,25 @@
 import { useEffect, useState } from 'react'
 import { SPORTS } from './services/espnApi'
 import { useScoreboard } from './hooks/useScoreboard'
+import { useFavorites } from './hooks/useFavorites'
+import { usePinnedGame } from './hooks/usePinnedGame'
 import { todayParam } from './utils/date'
 import DateStrip from './components/DateStrip'
 import GameList from './components/GameList'
 import LastUpdated from './components/LastUpdated'
 import BottomTabBar from './components/BottomTabBar'
 import PullToRefresh from './components/PullToRefresh'
+import FavoritesScreen from './components/FavoritesScreen'
+import StarIcon from './components/StarIcon'
 
 function App() {
   const [activeSport, setActiveSport] = useState(SPORTS[0].key)
   const [today, setToday] = useState(() => todayParam())
   const [selectedDate, setSelectedDate] = useState(today)
+  const [favoritesOpen, setFavoritesOpen] = useState(false)
+
+  const { isFavorite, toggleFavorite } = useFavorites()
+  const { pinned, togglePin } = usePinnedGame(today)
 
   // The calendar day can roll over while the app is open (backgrounded
   // overnight, or just left open past midnight). Re-check on every return
@@ -42,12 +50,21 @@ function App() {
   }, [])
 
   const { sportData, refresh } = useScoreboard(activeSport, selectedDate)
+  const isToday = selectedDate === today
 
   return (
     <div className="app app--bottom-nav">
       <PullToRefresh onRefresh={refresh}>
         <header className="app-header">
           <h1>MySports</h1>
+          <button
+            type="button"
+            className="icon-button"
+            onClick={() => setFavoritesOpen(true)}
+            aria-label="Favorite teams"
+          >
+            <StarIcon />
+          </button>
         </header>
 
         <DateStrip selectedDate={selectedDate} today={today} onSelect={setSelectedDate} />
@@ -56,11 +73,27 @@ function App() {
 
         <main>
           {!sportData && <p className="state-message">Loading scores…</p>}
-          {sportData && <GameList sport={sportData} />}
+          {sportData && (
+            <GameList
+              sport={sportData}
+              isToday={isToday}
+              isFavorite={isFavorite}
+              pinned={pinned}
+              onTogglePin={togglePin}
+            />
+          )}
         </main>
       </PullToRefresh>
 
       <BottomTabBar sports={SPORTS} activeSport={activeSport} onSelect={setActiveSport} />
+
+      {favoritesOpen && (
+        <FavoritesScreen
+          isFavorite={isFavorite}
+          onToggle={toggleFavorite}
+          onClose={() => setFavoritesOpen(false)}
+        />
+      )}
     </div>
   )
 }
