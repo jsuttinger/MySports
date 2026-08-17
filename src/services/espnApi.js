@@ -327,10 +327,26 @@ export async function fetchScoringPlays(sportKey, eventId) {
 // app is open, and the favorites screen may be opened more than once.
 const teamsCache = {}
 
-// Full team roster for a sport (for the favorites picker), fetched from
-// ESPN's teams endpoint -- same base path as the scoreboard, just swapping
-// the last segment. `limit=999` avoids ESPN's default 50-per-page cap
-// (college football alone has 750+ teams across every division).
+// Full team roster for a sport (for the favorites picker). ESPN's own
+// `/teams` endpoint (site.api.espn.com/apis/site/v2/sports/.../teams) looks
+// like the obvious choice -- same host and base path as the scoreboard --
+// but unlike every other endpoint this app calls, ESPN serves it with no
+// `Access-Control-Allow-Origin` header at all (confirmed via curl: every
+// other endpoint we use, including this same sport's own scoreboard, sends
+// `access-control-allow-origin: *`; `/teams` sends none, for every sport and
+// every query string tried). A browser fetch() to it is blocked by CORS
+// before the response body is ever seen -- and when that fetch happens
+// inside the service worker's fetch handler, Workbox reports the resulting
+// rejection as an opaque "no-response" error, which reads like a
+// service-worker bug but isn't one; the exact same fetch() fails identically
+// from the main thread with no service worker involved at all.
+//
+// ESPN's standings endpoint (a different base path: `/apis/v2/sports/...`
+// instead of `/apis/site/v2/sports/...`) does send CORS headers and happens
+// to include every team's id/name/abbreviation/logo grouped by
+// conference/division -- and for college football specifically, it's
+// scoped to FBS (~125 teams) rather than every division ESPN tracks
+// (750+), which is what we want for a usable picker anyway.
 export async function fetchTeams(sportKey) {
   if (teamsCache[sportKey]) return teamsCache[sportKey]
 
@@ -338,14 +354,15 @@ export async function fetchTeams(sportKey) {
   if (!sport) throw new Error(`Unknown sport: ${sportKey}`)
 
   const promise = (async () => {
-    const url = `${sport.url.replace('/scoreboard', '/teams')}?limit=999`
+    const url = sport.url.replace('/apis/site/v2/sports/', '/apis/v2/sports/').replace(/\/scoreboard$/, '/standings')
     const response = await fetch(url)
     if (!response.ok) {
       throw new Error(`HTTP ${response.status} ${response.statusText}`)
     }
     const json = await response.json()
-    const entries = json.sports?.[0]?.leagues?.[0]?.teams ?? []
-    return entries
+    const groups = json.children?.length ? json.children : [json]
+    return groups
+      .flatMap((group) => group.standings?.entries ?? [])
       .map((entry) => entry.team)
       .filter(Boolean)
       .map((team) => ({
