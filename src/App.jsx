@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { SPORTS } from './services/espnApi'
 import { useScoreboard } from './hooks/useScoreboard'
 import { useFavorites } from './hooks/useFavorites'
-import { usePinnedGame } from './hooks/usePinnedGame'
+import { usePinnedGames } from './hooks/usePinnedGames'
 import { todayParam } from './utils/date'
 import DateStrip from './components/DateStrip'
 import GameList from './components/GameList'
@@ -19,7 +19,7 @@ function App() {
   const [favoritesOpen, setFavoritesOpen] = useState(false)
 
   const { isFavorite, toggleFavorite } = useFavorites()
-  const { pinned, togglePin } = usePinnedGame(today)
+  const { isPinned, togglePin } = usePinnedGames(today)
 
   // The calendar day can roll over while the app is open (backgrounded
   // overnight, or just left open past midnight). Re-check on every return
@@ -78,7 +78,7 @@ function App() {
               sport={sportData}
               isToday={isToday}
               isFavorite={isFavorite}
-              pinned={pinned}
+              isPinned={isPinned}
               onTogglePin={togglePin}
             />
           )}

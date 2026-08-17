@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import TeamScoreCard from './TeamScoreCard'
 import { sortGames } from '../utils/sortGames'
 
-function GameList({ sport, isToday, isFavorite, pinned, onTogglePin }) {
+function GameList({ sport, isToday, isFavorite, isPinned, onTogglePin }) {
   const [expandedId, setExpandedId] = useState(null)
 
   // Switching sport tabs or the selected date should never leave a card
@@ -28,20 +28,21 @@ function GameList({ sport, isToday, isFavorite, pinned, onTogglePin }) {
     return isFavorite(sport.key, game.home.id) || isFavorite(sport.key, game.away.id)
   }
 
-  // A pin only ever elevates a game within today's feed, for the sport it
-  // was pinned from.
-  const pinnedGameId = isToday && pinned?.sportKey === sport.key ? pinned.gameId : null
+  // Pins only ever elevate games within today's feed.
+  function isPinnedGame(game) {
+    return isToday && isPinned(sport.key, game.id)
+  }
 
   return (
     <div className="game-list">
-      {sortGames(sport.games, { isFavoriteGame, pinnedGameId }).map((game) => (
+      {sortGames(sport.games, { isFavoriteGame, isPinnedGame }).map((game) => (
         <TeamScoreCard
           key={game.id}
           game={game}
           sportKey={sport.key}
           expanded={game.id === expandedId}
           onToggle={() => setExpandedId((current) => (current === game.id ? null : game.id))}
-          pinned={game.id === pinnedGameId}
+          pinned={isPinnedGame(game)}
           onTogglePin={isToday ? () => onTogglePin(sport.key, game.id) : null}
         />
       ))}

@@ -9,13 +9,13 @@ function compareByStatus(a, b) {
   return 0
 }
 
-// Games involving a favorited team come first, then the pinned game (if it
-// isn't already in that group), then everything else -- each group still
+// Games involving a favorited team come first, then any pinned games (that
+// aren't already in that group), then everything else -- each group still
 // internally ordered live > upcoming > final.
-export function sortGames(games, { isFavoriteGame, pinnedGameId } = {}) {
+export function sortGames(games, { isFavoriteGame, isPinnedGame } = {}) {
   function tier(game) {
     if (isFavoriteGame?.(game)) return 0
-    if (pinnedGameId && game.id === pinnedGameId) return 1
+    if (isPinnedGame?.(game)) return 1
     return 2
   }
 
