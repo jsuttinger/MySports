@@ -12,16 +12,37 @@ const RESISTANCE = 0.5
 // refresh, so this recreates it with touch events: pulling down from the
 // very top of the page reveals a spinner, and releasing past the threshold
 // calls `onRefresh` and waits for it before snapping back.
-function PullToRefresh({ onRefresh, children }) {
+//
+// The gesture is tracked via `document`-level listeners (there's no single
+// scroll container to attach to -- the whole page scrolls together), gated
+// on `window.scrollY === 0`. That check only knows about the main page's
+// scroll position, not any fixed-position overlay's own internal scroll
+// (e.g. the favorites screen), so `disabled` lets a caller suspend the
+// gesture entirely while such an overlay is open -- otherwise a swipe meant
+// to scroll the overlay's list gets misread as a pull and preventDefault()
+// silently blocks the overlay's own scrolling.
+function PullToRefresh({ onRefresh, disabled = false, children }) {
   const [pullDistance, setPullDistance] = useState(0)
   const [refreshing, setRefreshing] = useState(false)
   const gestureRef = useRef({ startY: null, pulling: false })
   const pullDistanceRef = useRef(0)
   const refreshingRef = useRef(false)
+  const disabledRef = useRef(disabled)
 
   useEffect(() => {
     refreshingRef.current = refreshing
   }, [refreshing])
+
+  useEffect(() => {
+    disabledRef.current = disabled
+    // If an overlay opens mid-gesture, abandon the pull immediately rather
+    // than let it finish and possibly fire a refresh.
+    if (disabled) {
+      gestureRef.current.pulling = false
+      setPullDistance(0)
+      pullDistanceRef.current = 0
+    }
+  }, [disabled])
 
   useEffect(() => {
     function updatePullDistance(value) {
@@ -30,14 +51,14 @@ function PullToRefresh({ onRefresh, children }) {
     }
 
     function handleTouchStart(event) {
-      if (refreshingRef.current || window.scrollY > 0) return
+      if (disabledRef.current || refreshingRef.current || window.scrollY > 0) return
       gestureRef.current = { startY: event.touches[0].clientY, pulling: true }
     }
 
     function handleTouchMove(event) {
       const gesture = gestureRef.current
       if (!gesture.pulling) return
-      if (window.scrollY > 0) {
+      if (disabledRef.current || window.scrollY > 0) {
         gesture.pulling = false
         updatePullDistance(0)
         return
