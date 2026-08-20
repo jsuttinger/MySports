@@ -189,6 +189,7 @@ function TeamScoreCard({ game, sportKey, expanded, onToggle, pinned, onTogglePin
         <span className="status-detail">
           {game.status === 'scheduled' ? formatStartTime(game.startTime) : game.statusDetail}
         </span>
+        {game.isPreseason && <span className="preseason-badge">PRESEASON</span>}
         <span className="game-card__status-actions">
           {onTogglePin && (
             <button

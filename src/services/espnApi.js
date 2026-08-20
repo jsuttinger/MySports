@@ -127,6 +127,13 @@ function parseSituation(competition) {
   }
 }
 
+// ESPN tags each event with a season type (1 = preseason, 2 = regular
+// season, 3 = postseason) -- surfaced on the parsed game so the UI can badge
+// preseason games instead of hiding them.
+function isPreseason(event) {
+  return event.season?.type === 1
+}
+
 function parseEvent(event) {
   const competition = event.competitions?.[0]
   const competitors = competition?.competitors ?? []
@@ -140,6 +147,7 @@ function parseEvent(event) {
     startTime: event.date,
     status: normalizeStatus(statusType.state),
     statusDetail: statusType.shortDetail ?? statusType.detail ?? statusType.description ?? '',
+    isPreseason: isPreseason(event),
     home: parseTeam(home),
     away: parseTeam(away),
     odds: parseOdds(competition),
@@ -147,18 +155,8 @@ function parseEvent(event) {
   }
 }
 
-// ESPN tags each event with a season type (1 = preseason, 2 = regular
-// season, 3 = postseason). We only ever want games that count -- drop
-// preseason here, once, so every consumer (main feed, date strip, all
-// sports) sees a preseason-free list without having to filter it itself.
-// An event with no season info at all is left in rather than risk hiding a
-// real game over a missing field.
-function isPreseason(event) {
-  return event.season?.type === 1
-}
-
 function parseScoreboard(json) {
-  return (json.events ?? []).filter((event) => !isPreseason(event)).map(parseEvent)
+  return (json.events ?? []).map(parseEvent)
 }
 
 async function fetchSportScoreboard({ key, label, url: baseUrl }, dateParam) {
