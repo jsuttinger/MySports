@@ -4,6 +4,7 @@ import Chevron from './Chevron'
 import DetailRow from './DetailRow'
 import ScoringSummary from './ScoringSummary'
 import { fetchMlbGameSummary } from '../services/espnApi'
+import { REFRESH_INTERVAL_MS } from '../hooks/useScoreboard'
 
 const BATTING_COLUMNS = ['AB', 'R', 'H', 'RBI', 'HR', 'BB', 'K']
 const PITCHING_COLUMNS = ['IP', 'H', 'R', 'ER', 'BB', 'K', 'ERA']
@@ -174,23 +175,56 @@ function MlbGameDetail({ game, expanded }) {
   const [summary, setSummary] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const fetchedRef = useRef(false)
+  const hasLoadedRef = useRef(false)
 
-  // Fetch once, the first time the card is actually expanded — not on
-  // mount (the detail view stays mounted even while collapsed for the
-  // expand/collapse CSS animation) and not on scheduled games, which have
-  // no plays or box score yet.
+  // Fetch once the card is actually expanded (not on mount — the detail
+  // view stays mounted even while collapsed, for the expand/collapse CSS
+  // animation) and not on scheduled games, which have no plays or box score
+  // yet. Then, for as long as the card stays expanded and the game is still
+  // live, keep refetching on the same cadence the main feed refreshes on —
+  // otherwise scoring plays and the box score go stale until the card is
+  // collapsed and reopened. A final game's summary won't change again once
+  // fetched, so the interval stops there rather than polling forever.
   useEffect(() => {
-    if (!expanded || fetchedRef.current || game.status === 'scheduled') return
-    fetchedRef.current = true
-    setLoading(true)
-    fetchMlbGameSummary(game.id)
-      .then(setSummary)
-      .catch((err) => {
-        console.error(`[MySports] Failed to fetch game summary for event ${game.id}`, err)
-        setError(err.message ?? String(err))
-      })
-      .finally(() => setLoading(false))
+    if (!expanded || game.status === 'scheduled') return
+
+    let cancelled = false
+
+    function load() {
+      if (!hasLoadedRef.current) setLoading(true)
+      fetchMlbGameSummary(game.id)
+        .then((result) => {
+          if (cancelled) return
+          hasLoadedRef.current = true
+          setSummary(result)
+          setError(null)
+        })
+        .catch((err) => {
+          if (cancelled) return
+          console.error(`[MySports] Failed to fetch game summary for event ${game.id}`, err)
+          // A failed background refresh shouldn't blank out data that's
+          // already on screen — only surface the error if we've never had
+          // anything to show.
+          if (!hasLoadedRef.current) setError(err.message ?? String(err))
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false)
+        })
+    }
+
+    load()
+
+    if (game.status !== 'live') {
+      return () => {
+        cancelled = true
+      }
+    }
+
+    const intervalId = setInterval(load, REFRESH_INTERVAL_MS)
+    return () => {
+      cancelled = true
+      clearInterval(intervalId)
+    }
   }, [expanded, game.id, game.status])
 
   if (game.status === 'scheduled') {

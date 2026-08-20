@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import DetailRow from './DetailRow'
 import ScoringSummary from './ScoringSummary'
 import { fetchScoringPlays } from '../services/espnApi'
+import { REFRESH_INTERVAL_MS } from '../hooks/useScoreboard'
 
 // Sports with a real scoring-play feed available (see espnApi.fetchScoringPlays).
 // Others just get the generic record/situation info below.
@@ -27,20 +28,50 @@ function GenericGameDetail({ game, sportKey, expanded }) {
   const [plays, setPlays] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const fetchedRef = useRef(false)
+  const hasLoadedRef = useRef(false)
 
+  // Same pattern as MlbGameDetail: fetch once on expand, then keep
+  // refetching on the main feed's cadence for as long as this card is
+  // expanded and the game is still live, so new scoring plays show up
+  // without collapsing/reopening the card.
   useEffect(() => {
-    if (!supportsScoringSummary || !expanded || fetchedRef.current) return
-    fetchedRef.current = true
-    setLoading(true)
-    fetchScoringPlays(sportKey, game.id)
-      .then(setPlays)
-      .catch((err) => {
-        console.error(`[MySports] Failed to fetch scoring plays for event ${game.id}`, err)
-        setError(err.message ?? String(err))
-      })
-      .finally(() => setLoading(false))
-  }, [supportsScoringSummary, expanded, sportKey, game.id])
+    if (!supportsScoringSummary || !expanded) return
+
+    let cancelled = false
+
+    function load() {
+      if (!hasLoadedRef.current) setLoading(true)
+      fetchScoringPlays(sportKey, game.id)
+        .then((result) => {
+          if (cancelled) return
+          hasLoadedRef.current = true
+          setPlays(result)
+          setError(null)
+        })
+        .catch((err) => {
+          if (cancelled) return
+          console.error(`[MySports] Failed to fetch scoring plays for event ${game.id}`, err)
+          if (!hasLoadedRef.current) setError(err.message ?? String(err))
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false)
+        })
+    }
+
+    load()
+
+    if (game.status !== 'live') {
+      return () => {
+        cancelled = true
+      }
+    }
+
+    const intervalId = setInterval(load, REFRESH_INTERVAL_MS)
+    return () => {
+      cancelled = true
+      clearInterval(intervalId)
+    }
+  }, [supportsScoringSummary, expanded, sportKey, game.id, game.status])
 
   const hasOtherInfo = hasPossession || hasLastPlay
 

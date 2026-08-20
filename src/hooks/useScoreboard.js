@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { fetchScoreboard } from '../services/espnApi'
 import { todayParam } from '../utils/date'
 
-const REFRESH_INTERVAL_MS = 60000
+// Also used by expanded-card detail views (scoring summary, box score, etc)
+// so their background refresh runs on the same cadence as the main feed.
+export const REFRESH_INTERVAL_MS = 60000
 
 // Marks each game with when its score last changed (or carries the previous
 // mark forward if it didn't), so a component can key a one-shot highlight
