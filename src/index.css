@@ -159,6 +159,39 @@ body {
   opacity: 1;
 }
 
+/* Floating refresh button */
+
+.floating-refresh-button {
+  position: fixed;
+  right: 16px;
+  bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface) 92%, black);
+  backdrop-filter: blur(20px);
+  color: var(--text-secondary);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+.floating-refresh-button:hover {
+  color: var(--text);
+}
+
+.floating-refresh-button:disabled {
+  cursor: default;
+}
+
+.floating-refresh-button__icon--spinning {
+  animation: pull-refresh-spin 0.8s linear infinite;
+}
+
 /* Date strip */
 
 .date-strip {

@@ -11,6 +11,7 @@ import BottomTabBar from './components/BottomTabBar'
 import PullToRefresh from './components/PullToRefresh'
 import FavoritesScreen from './components/FavoritesScreen'
 import StarIcon from './components/StarIcon'
+import FloatingRefreshButton from './components/FloatingRefreshButton'
 
 function App() {
   const [activeSport, setActiveSport] = useState(SPORTS[0].key)
@@ -86,6 +87,8 @@ function App() {
       </PullToRefresh>
 
       <BottomTabBar sports={SPORTS} activeSport={activeSport} onSelect={setActiveSport} />
+
+      {!favoritesOpen && <FloatingRefreshButton onRefresh={refresh} />}
 
       {favoritesOpen && (
         <FavoritesScreen
