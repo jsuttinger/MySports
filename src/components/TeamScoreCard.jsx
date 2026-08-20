@@ -146,9 +146,17 @@ function TeamScoreCard({ game, sportKey, expanded, onToggle, pinned, onTogglePin
   // "Tap elsewhere to collapse": while this card is expanded, any click
   // outside it collapses it. Clicks on the card itself are handled by its
   // own onClick toggle below, so this only ever fires for outside clicks.
+  // This listens in the capture phase (fires before any element's own
+  // onClick, including this card's) so it reliably catches every outside
+  // click even if something in between calls stopPropagation() -- which
+  // means a descendant's stopPropagation() can't opt out of it either, so
+  // an element that's meant to sit outside every card without collapsing
+  // one (e.g. the floating refresh button) has to say so explicitly via
+  // data-preserve-expanded instead.
   useEffect(() => {
     if (!expanded) return
     function handleOutsideClick(event) {
+      if (event.target.closest?.('[data-preserve-expanded]')) return
       if (cardRef.current && !cardRef.current.contains(event.target)) onToggle()
     }
     document.addEventListener('click', handleOutsideClick, true)
