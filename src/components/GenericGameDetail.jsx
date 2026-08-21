@@ -7,15 +7,15 @@ import { REFRESH_INTERVAL_MS } from '../hooks/useScoreboard'
 // Sports with a real scoring-play feed available (see espnApi.fetchScoringPlays).
 // Others just get the generic record/situation info below.
 const SCORING_SUMMARY_EMPTY_MESSAGE = {
-  nfl: 'No scoring yet.',
   ncaaf: 'No scoring yet.',
   nhl: 'No goals scored yet.',
 }
 
 // Placeholder detail view for sports without a full dedicated one yet.
-// NFL, NCAAF, and NHL get a real Scoring Summary (fetched on expand);
-// everything else here just surfaces data the shared espnApi parser already
-// extracts for every sport — no other sport-specific parsing added here.
+// NCAAF and NHL get a real Scoring Summary (fetched on expand); everything
+// else here just surfaces data the shared espnApi parser already extracts
+// for every sport — no other sport-specific parsing added here. NFL and MLB
+// have their own dedicated detail components (NflGameDetail, MlbGameDetail).
 // Team records are already shown inline under each team's name in the card
 // header (visible whether or not this is expanded), so they aren't repeated
 // here.

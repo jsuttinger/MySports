@@ -261,8 +261,10 @@ export async function fetchMlbGameSummary(eventId) {
   }
 }
 
+// NFL has its own dedicated fetch (fetchNflGameSummary, above) that pulls
+// scoring plays and the full box score together in one request, so it's not
+// listed here.
 const SCORING_SUMMARY_URLS = {
-  nfl: 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary',
   ncaaf: 'https://site.api.espn.com/apis/site/v2/sports/football/college-football/summary',
   nhl: 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary',
 }
@@ -288,6 +290,68 @@ function parseFootballScoringPlays(json) {
   }))
 }
 
+const NFL_SUMMARY_URL = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary'
+
+// Display titles for NFL's box score categories -- unlike MLB (just batting
+// + pitching), NFL's summary endpoint hands back up to ten of these per
+// team, keyed by a lowercase `name` field (not `type`, which is what MLB's
+// categories use instead). Any category ESPN adds that isn't in this map
+// still renders, just under its raw name, rather than being dropped.
+const NFL_CATEGORY_TITLES = {
+  passing: 'Passing',
+  rushing: 'Rushing',
+  receiving: 'Receiving',
+  fumbles: 'Fumbles',
+  defensive: 'Defense',
+  interceptions: 'Interceptions',
+  kickReturns: 'Kick Returns',
+  puntReturns: 'Punt Returns',
+  kicking: 'Kicking',
+  punting: 'Punting',
+}
+
+// Each category keeps its own `labels` (column headers) alongside its rows,
+// unlike MLB's fixed BATTING_COLUMNS/PITCHING_COLUMNS -- NFL has too many
+// categories with too little column overlap to hardcode, so the UI just
+// renders whatever columns ESPN sends for each one. Categories with no
+// athletes (nobody recorded that stat) are dropped rather than rendered
+// empty.
+function parseNflBoxScoreTeam(teamEntry) {
+  const categories = (teamEntry.statistics ?? [])
+    .map((category) => {
+      const rows = parseBoxScoreCategory(category)
+      if (rows.length === 0) return null
+      return {
+        key: category.name,
+        title: NFL_CATEGORY_TITLES[category.name] ?? category.name,
+        labels: category.labels ?? [],
+        rows,
+      }
+    })
+    .filter(Boolean)
+  return {
+    abbreviation: teamEntry.team?.abbreviation ?? '',
+    categories,
+  }
+}
+
+// Full player-level box score + scoring play log for one NFL game, fetched
+// lazily (only once the card is actually expanded) from the same summary
+// endpoint fetchScoringPlays uses for NFL's scoring summary alone -- fetched
+// together here since it's one request either way.
+export async function fetchNflGameSummary(eventId) {
+  const response = await fetch(`${NFL_SUMMARY_URL}?event=${eventId}`)
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} ${response.statusText}`)
+  }
+  const json = await response.json()
+  const teams = json.boxscore?.players ?? []
+  return {
+    boxScore: teams.map(parseNflBoxScoreTeam),
+    scoringPlays: parseFootballScoringPlays(json),
+  }
+}
+
 // NHL matches MLB's shape (scoringPlay flag inside the full `plays` list),
 // but period.displayValue is already formatted ("1st", "2nd", "3rd"), so no
 // ordinal conversion needed.
@@ -303,9 +367,9 @@ function parseNhlScoringPlays(json) {
 }
 
 // Scoring plays only (no box score) for sports that don't have a full
-// dedicated detail view yet. Returns [] for sports without a known summary
-// endpoint/shape rather than throwing, so callers can treat "unsupported"
-// and "no plays yet" the same way.
+// dedicated detail view yet (NCAAF, NHL — NFL and MLB have their own). Returns
+// [] for sports without a known summary endpoint/shape rather than throwing,
+// so callers can treat "unsupported" and "no plays yet" the same way.
 export async function fetchScoringPlays(sportKey, eventId) {
   const baseUrl = SCORING_SUMMARY_URLS[sportKey]
   if (!baseUrl) return []
@@ -316,7 +380,7 @@ export async function fetchScoringPlays(sportKey, eventId) {
   }
   const json = await response.json()
 
-  if (sportKey === 'nfl' || sportKey === 'ncaaf') return parseFootballScoringPlays(json)
+  if (sportKey === 'ncaaf') return parseFootballScoringPlays(json)
   if (sportKey === 'nhl') return parseNhlScoringPlays(json)
   return []
 }
