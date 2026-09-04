@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import Chevron from './Chevron'
 import DetailRow from './DetailRow'
 import ScoringSummary from './ScoringSummary'
-import { fetchNflGameSummary } from '../services/espnApi'
+import { fetchFootballGameSummary } from '../services/espnApi'
 import { REFRESH_INTERVAL_MS } from '../hooks/useScoreboard'
 
 function StatTable({ category }) {
@@ -82,7 +82,9 @@ function FullBoxScoreToggle({ teams, loading, error }) {
   )
 }
 
-function NflGameDetail({ game, expanded }) {
+// Shared by NFL and NCAAF -- ESPN returns the exact same shape (scoring
+// plays + up to ten box score categories per team) for both.
+function FootballGameDetail({ game, sportKey, expanded }) {
   const [summary, setSummary] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -100,7 +102,7 @@ function NflGameDetail({ game, expanded }) {
 
     function load() {
       if (!hasLoadedRef.current) setLoading(true)
-      fetchNflGameSummary(game.id)
+      fetchFootballGameSummary(sportKey, game.id)
         .then((result) => {
           if (cancelled) return
           hasLoadedRef.current = true
@@ -109,7 +111,7 @@ function NflGameDetail({ game, expanded }) {
         })
         .catch((err) => {
           if (cancelled) return
-          console.error(`[MySports] Failed to fetch NFL game summary for event ${game.id}`, err)
+          console.error(`[MySports] Failed to fetch ${sportKey} game summary for event ${game.id}`, err)
           if (!hasLoadedRef.current) setError(err.message ?? String(err))
         })
         .finally(() => {
@@ -130,7 +132,7 @@ function NflGameDetail({ game, expanded }) {
       cancelled = true
       clearInterval(intervalId)
     }
-  }, [expanded, game.id, game.status])
+  }, [expanded, sportKey, game.id, game.status])
 
   const hasLastPlay = Boolean(game.situation?.lastPlay)
   const hasPossession = Boolean(game.situation?.downDistance)
@@ -167,4 +169,4 @@ function NflGameDetail({ game, expanded }) {
   )
 }
 
-export default NflGameDetail
+export default FootballGameDetail
