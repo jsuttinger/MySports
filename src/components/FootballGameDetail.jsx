@@ -37,24 +37,44 @@ function StatTable({ category }) {
   )
 }
 
-function FullBoxScore({ teams }) {
+// Matches a box-score entry (only an abbreviation, from ESPN's summary
+// endpoint) back to the richer team object the scoreboard already gave us
+// (name, logo, home/away), so the section header can show more than just
+// three letters and pick up that team's card-glow color for its accent bar.
+function matchTeam(abbreviation, awayTeam, homeTeam) {
+  if (homeTeam?.abbreviation === abbreviation) return { team: homeTeam, isHome: true }
+  if (awayTeam?.abbreviation === abbreviation) return { team: awayTeam, isHome: false }
+  return { team: null, isHome: false }
+}
+
+function FullBoxScore({ teams, awayTeam, homeTeam }) {
   return (
     <div className="full-box">
-      {teams.map((team) => (
-        <div key={team.abbreviation} className="full-box__team">
-          <div className="full-box__team-name">{team.abbreviation}</div>
-          {team.categories.map((category) => (
-            <StatTable key={category.key} category={category} />
-          ))}
-        </div>
-      ))}
+      {teams.map((team) => {
+        const { team: matched, isHome } = matchTeam(team.abbreviation, awayTeam, homeTeam)
+        return (
+          <div
+            key={team.abbreviation}
+            className="full-box__team"
+            style={{ '--full-box-accent': isHome ? 'var(--home-glow)' : 'var(--away-glow)' }}
+          >
+            <div className="full-box__team-header">
+              {matched?.logo && <img className="full-box__team-logo" src={matched.logo} alt="" aria-hidden="true" />}
+              <span className="full-box__team-name">{matched?.name ?? team.abbreviation}</span>
+            </div>
+            {team.categories.map((category) => (
+              <StatTable key={category.key} category={category} />
+            ))}
+          </div>
+        )
+      })}
     </div>
   )
 }
 
 // Same collapsible pattern as MLB's Full Box Score: purely presentational,
 // hidden by default, revealing whatever the parent has already fetched.
-function FullBoxScoreToggle({ teams, loading, error }) {
+function FullBoxScoreToggle({ teams, awayTeam, homeTeam, loading, error }) {
   const [open, setOpen] = useState(false)
   const hasStats = teams?.some((team) => team.categories.length > 0)
 
@@ -75,7 +95,7 @@ function FullBoxScoreToggle({ teams, loading, error }) {
           {loading && <p className="game-detail__placeholder">Loading full box score…</p>}
           {error && <p className="state-message--error">Couldn't load box score: {error}</p>}
           {!loading && !error && !hasStats && <p className="game-detail__placeholder">Not available yet.</p>}
-          {hasStats && <FullBoxScore teams={teams} />}
+          {hasStats && <FullBoxScore teams={teams} awayTeam={awayTeam} homeTeam={homeTeam} />}
         </div>
       )}
     </div>
@@ -164,7 +184,13 @@ function FootballGameDetail({ game, sportKey, expanded }) {
         plays={summary?.scoringPlays}
         emptyMessage="No scoring yet."
       />
-      <FullBoxScoreToggle teams={summary?.boxScore} loading={loading} error={error} />
+      <FullBoxScoreToggle
+        teams={summary?.boxScore}
+        awayTeam={game.away}
+        homeTeam={game.home}
+        loading={loading}
+        error={error}
+      />
     </div>
   )
 }

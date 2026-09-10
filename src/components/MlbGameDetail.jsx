@@ -128,16 +128,36 @@ function StatTable({ title, rows, columns }) {
   )
 }
 
-function FullBoxScore({ teams }) {
+// Matches a box-score entry (only an abbreviation, from ESPN's summary
+// endpoint) back to the richer team object the scoreboard already gave us
+// (name, logo, home/away), so the section header can show more than just
+// three letters and pick up that team's card-glow color for its accent bar.
+function matchTeam(abbreviation, awayTeam, homeTeam) {
+  if (homeTeam?.abbreviation === abbreviation) return { team: homeTeam, isHome: true }
+  if (awayTeam?.abbreviation === abbreviation) return { team: awayTeam, isHome: false }
+  return { team: null, isHome: false }
+}
+
+function FullBoxScore({ teams, awayTeam, homeTeam }) {
   return (
     <div className="full-box">
-      {teams.map((team) => (
-        <div key={team.abbreviation} className="full-box__team">
-          <div className="full-box__team-name">{team.abbreviation}</div>
-          <StatTable title="Batting" rows={team.batting} columns={BATTING_COLUMNS} />
-          <StatTable title="Pitching" rows={team.pitching} columns={PITCHING_COLUMNS} />
-        </div>
-      ))}
+      {teams.map((team) => {
+        const { team: matched, isHome } = matchTeam(team.abbreviation, awayTeam, homeTeam)
+        return (
+          <div
+            key={team.abbreviation}
+            className="full-box__team"
+            style={{ '--full-box-accent': isHome ? 'var(--home-glow)' : 'var(--away-glow)' }}
+          >
+            <div className="full-box__team-header">
+              {matched?.logo && <img className="full-box__team-logo" src={matched.logo} alt="" aria-hidden="true" />}
+              <span className="full-box__team-name">{matched?.name ?? team.abbreviation}</span>
+            </div>
+            <StatTable title="Batting" rows={team.batting} columns={BATTING_COLUMNS} />
+            <StatTable title="Pitching" rows={team.pitching} columns={PITCHING_COLUMNS} />
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -145,7 +165,7 @@ function FullBoxScore({ teams }) {
 // Purely presentational now — the box score data is fetched once by the
 // parent (alongside the scoring plays) as soon as the card expands, so
 // opening this just reveals/hides what's already there.
-function FullBoxScoreToggle({ teams, loading, error }) {
+function FullBoxScoreToggle({ teams, awayTeam, homeTeam, loading, error }) {
   const [open, setOpen] = useState(false)
 
   function handleClick(event) {
@@ -164,7 +184,7 @@ function FullBoxScoreToggle({ teams, loading, error }) {
         <div className="full-box-toggle__content">
           {loading && <p className="game-detail__placeholder">Loading full box score…</p>}
           {error && <p className="state-message--error">Couldn't load box score: {error}</p>}
-          {teams && <FullBoxScore teams={teams} />}
+          {teams && <FullBoxScore teams={teams} awayTeam={awayTeam} homeTeam={homeTeam} />}
         </div>
       )}
     </div>
@@ -245,7 +265,13 @@ function MlbGameDetail({ game, expanded }) {
         plays={summary?.scoringPlays}
         emptyMessage="No runs scored yet."
       />
-      <FullBoxScoreToggle teams={summary?.boxScore} loading={loading} error={error} />
+      <FullBoxScoreToggle
+        teams={summary?.boxScore}
+        awayTeam={game.away}
+        homeTeam={game.home}
+        loading={loading}
+        error={error}
+      />
     </div>
   )
 }
