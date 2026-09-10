@@ -34,7 +34,7 @@ body {
 .app {
   max-width: 720px;
   margin: 0 auto;
-  padding: 40px 20px 80px;
+  padding: calc(40px + env(safe-area-inset-top, 0px)) 20px 80px;
 }
 
 .app--bottom-nav {
@@ -921,7 +921,7 @@ td.box-score__team {
   display: flex;
   flex-direction: column;
   background: var(--bg);
-  padding: 40px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+  padding: calc(40px + env(safe-area-inset-top, 0px)) 20px calc(20px + env(safe-area-inset-bottom, 0px));
   overflow-y: auto;
 }
 
@@ -946,13 +946,13 @@ td.box-score__team {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border: none;
-  border-radius: 9px;
+  border-radius: 12px;
   background: var(--surface);
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 16px;
   cursor: pointer;
 }
 
