@@ -1047,3 +1047,213 @@ td.box-score__team {
 .favorite-team-row--active .favorite-team-row__star {
   color: var(--pin);
 }
+
+/* ============================================================
+   TEMPORARY: style-mockup variation preview.
+   Everything below is additive (scoped under [data-variant="a|b|c"])
+   and safe to delete wholesale, along with ThemeVariantSwitcher, once
+   a direction is picked (or none — the current look is kept as-is).
+   ============================================================ */
+
+.theme-variant-switcher {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: -14px 0 20px;
+  padding: 10px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--live) 6%, var(--surface));
+}
+
+.theme-variant-switcher__label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-tertiary);
+}
+
+.theme-variant-switcher__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.theme-variant-switcher__option {
+  flex: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: none;
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.theme-variant-switcher__option:hover {
+  color: var(--text);
+}
+
+.theme-variant-switcher__option--active {
+  background: var(--text);
+  color: var(--bg);
+}
+
+/* Elements only some variants reveal -- invisible/no-op under the current
+   look and under variants that don't use them. */
+
+.record-bar {
+  display: none;
+}
+
+.variant-status-dot {
+  display: none;
+  flex: none;
+}
+
+/* ---------- Variant A: minimal color shift ---------- */
+/* Cards stay exactly as they are. The only changes: the bottom nav's active
+   tab picks up that sport's accent color (ring + label), and every card's
+   existing team-color left border is boosted from a muted color-mix to the
+   full accent color, so color already computed for every game reads as a
+   real accent rather than a near-invisible dark line. */
+
+.app[data-variant='a'] .bottom-tab--active {
+  color: var(--sport-accent);
+}
+
+.app[data-variant='a'] .bottom-tab--active .bottom-tab__logo {
+  box-shadow: 0 0 0 2px var(--sport-accent);
+  opacity: 1;
+}
+
+.app[data-variant='a'] .game-card {
+  border-left-width: 4px;
+  border-left-color: var(--accent);
+}
+
+/* ---------- Variant B: fuller reference-inspired look ---------- */
+/* Soft rounded pill for the active nav tab, more rounded cards with a soft
+   raised shadow instead of a flat surface, the left accent stripe traded
+   for a small colored dot (the rounded corners have no edge to anchor a
+   border stripe to), and a colorful win/loss ratio bar under each record. */
+
+.app[data-variant='b'] .bottom-tab-bar {
+  gap: 4px;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.app[data-variant='b'] .bottom-tab {
+  border-radius: 999px;
+  padding: 6px 0;
+  transition: background 0.15s ease;
+}
+
+.app[data-variant='b'] .bottom-tab--active {
+  background: color-mix(in srgb, var(--sport-accent) 20%, transparent);
+  color: var(--text);
+}
+
+.app[data-variant='b'] .bottom-tab--active .bottom-tab__logo {
+  opacity: 1;
+}
+
+.app[data-variant='b'] .game-card {
+  border-left: none;
+  border-radius: 24px;
+  padding: 20px 22px;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.32),
+    0 1px 2px rgba(0, 0, 0, 0.24);
+}
+
+.app[data-variant='b'] .game-card--live::before {
+  border-radius: 24px 24px 0 0;
+}
+
+.app[data-variant='b'] .variant-status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 2px;
+}
+
+.app[data-variant='b'] .variant-status-dot--scheduled {
+  background: #4c8dff;
+}
+
+.app[data-variant='b'] .variant-status-dot--final {
+  background: #6ee7b7;
+}
+
+.app[data-variant='b'] .record-bar {
+  display: flex;
+  width: 100%;
+  max-width: 60px;
+  height: 3px;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 3px;
+}
+
+.app[data-variant='b'] .record-bar__win {
+  background: #34d399;
+}
+
+.app[data-variant='b'] .record-bar__loss {
+  background: color-mix(in srgb, var(--text-tertiary) 55%, transparent);
+}
+
+/* ---------- Variant C: creative blend ---------- */
+/* Same soft pill idea as B, but subtler (lower-opacity, smaller footprint)
+   to stay quiet across a long list of tabs. Cards round moderately and get
+   a light lift rather than B's deeper shadow, and — unlike B — keep the
+   existing left accent stripe (boosted, as in A) alongside the small status
+   dot, rather than trading it away. No win/loss bar; for a screen this
+   dense, that reads as one colorful detail too many. */
+
+.app[data-variant='c'] .bottom-tab {
+  border-radius: 999px;
+  padding: 6px 0;
+  transition: background 0.15s ease;
+}
+
+.app[data-variant='c'] .bottom-tab--active {
+  background: color-mix(in srgb, var(--sport-accent) 12%, transparent);
+  color: var(--sport-accent);
+}
+
+.app[data-variant='c'] .bottom-tab--active .bottom-tab__logo {
+  opacity: 1;
+}
+
+.app[data-variant='c'] .game-card {
+  border-left-width: 4px;
+  border-left-color: var(--accent);
+  border-radius: 20px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.22);
+}
+
+.app[data-variant='c'] .game-card--live::before {
+  border-radius: 0 20px 0 0;
+}
+
+.app[data-variant='c'] .variant-status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 2px;
+}
+
+.app[data-variant='c'] .variant-status-dot--scheduled {
+  background: #4c8dff;
+}
+
+.app[data-variant='c'] .variant-status-dot--final {
+  background: #6ee7b7;
+}

@@ -7,6 +7,7 @@ function BottomTabBar({ sports, activeSport, onSelect }) {
           key={sport.key}
           type="button"
           className={`bottom-tab${sport.key === activeSport ? ' bottom-tab--active' : ''}`}
+          style={{ '--sport-accent': sport.accentColor }}
           onClick={() => onSelect(sport.key)}
         >
           <img className="bottom-tab__logo" src={sport.logo} alt="" aria-hidden="true" />

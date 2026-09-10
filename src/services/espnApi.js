@@ -9,24 +9,30 @@ export const SPORTS = [
     label: 'NFL',
     url: 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard',
     logo: 'https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png',
+    // Purely cosmetic per-sport accent (nav highlight color etc) — not tied
+    // to any real team/league branding, just visual variety.
+    accentColor: '#4C8DFF',
   },
   {
     key: 'ncaaf',
     label: 'NCAAF',
     url: 'https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard',
     logo: 'https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-football-college.png',
+    accentColor: '#FF8A3D',
   },
   {
     key: 'mlb',
     label: 'MLB',
     url: 'https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard',
     logo: 'https://a.espncdn.com/i/teamlogos/leagues/500/mlb.png',
+    accentColor: '#34D399',
   },
   {
     key: 'nhl',
     label: 'NHL',
     url: 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard',
     logo: 'https://a.espncdn.com/i/teamlogos/leagues/500/nhl.png',
+    accentColor: '#A78BFA',
   },
 ]
 

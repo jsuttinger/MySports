@@ -12,12 +12,32 @@ import PullToRefresh from './components/PullToRefresh'
 import FavoritesScreen from './components/FavoritesScreen'
 import StarIcon from './components/StarIcon'
 import FloatingRefreshButton from './components/FloatingRefreshButton'
+import ThemeVariantSwitcher from './components/ThemeVariantSwitcher'
+
+const THEME_VARIANT_KEY = 'mysports:themeVariantPreview'
 
 function App() {
   const [activeSport, setActiveSport] = useState(SPORTS[0].key)
   const [today, setToday] = useState(() => todayParam())
   const [selectedDate, setSelectedDate] = useState(today)
   const [favoritesOpen, setFavoritesOpen] = useState(false)
+
+  // TEMPORARY: which style-mockup variation to preview. Persisted so the
+  // choice survives a refresh while comparing.
+  const [themeVariant, setThemeVariant] = useState(() => {
+    try {
+      return localStorage.getItem(THEME_VARIANT_KEY) || 'none'
+    } catch {
+      return 'none'
+    }
+  })
+  useEffect(() => {
+    try {
+      localStorage.setItem(THEME_VARIANT_KEY, themeVariant)
+    } catch {
+      // ignore (private browsing, storage disabled, etc.)
+    }
+  }, [themeVariant])
 
   const { isFavorite, toggleFavorite } = useFavorites()
   const { isPinned, togglePin } = usePinnedGames(today)
@@ -54,7 +74,7 @@ function App() {
   const isToday = selectedDate === today
 
   return (
-    <div className="app app--bottom-nav">
+    <div className="app app--bottom-nav" data-variant={themeVariant === 'none' ? undefined : themeVariant}>
       <PullToRefresh onRefresh={refresh} disabled={favoritesOpen}>
         <header className="app-header">
           <h1>MySports</h1>
@@ -67,6 +87,8 @@ function App() {
             <StarIcon />
           </button>
         </header>
+
+        <ThemeVariantSwitcher value={themeVariant} onChange={setThemeVariant} />
 
         <DateStrip selectedDate={selectedDate} today={today} onSelect={setSelectedDate} />
 

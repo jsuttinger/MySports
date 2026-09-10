@@ -46,7 +46,23 @@ function TeamLogo({ team }) {
   )
 }
 
+// Win/loss fraction of a "W-L" (or "W-L-T"/"W-L-OT") record string, for the
+// small colored ratio bar some style variants show under the record text.
+// Hidden by default (see .record-bar in index.css) -- purely presentational,
+// computed unconditionally so a variant can reveal it without extra plumbing.
+function parseRecordRatio(record) {
+  const match = record?.match(/^(\d+)-(\d+)/)
+  if (!match) return null
+  const wins = Number(match[1])
+  const losses = Number(match[2])
+  const total = wins + losses
+  if (total === 0) return null
+  return { winPct: (wins / total) * 100, lossPct: (losses / total) * 100 }
+}
+
 function TeamRow({ team, showScore, muted, spread }) {
+  const recordRatio = parseRecordRatio(team.record)
+
   return (
     <div className="team-row">
       <TeamLogo team={team} />
@@ -60,6 +76,12 @@ function TeamRow({ team, showScore, muted, spread }) {
           {spread && <span className="team-spread">{spread}</span>}
         </span>
         {team.record && <span className="team-record">{team.record}</span>}
+        {recordRatio && (
+          <span className="record-bar" aria-hidden="true">
+            <span className="record-bar__win" style={{ width: `${recordRatio.winPct}%` }} />
+            <span className="record-bar__loss" style={{ width: `${recordRatio.lossPct}%` }} />
+          </span>
+        )}
       </span>
       {showScore && (
         <span className={`team-score${muted ? ' team-score--muted' : ''}`}>{team.score ?? '-'}</span>
@@ -185,6 +207,9 @@ function TeamScoreCard({ game, sportKey, expanded, onToggle, pinned, onTogglePin
             <span className="live-dot" />
             LIVE
           </span>
+        )}
+        {game.status !== 'live' && (
+          <span className={`variant-status-dot variant-status-dot--${game.status}`} aria-hidden="true" />
         )}
         <span className="status-detail">
           {game.status === 'scheduled' ? formatStartTime(game.startTime) : game.statusDetail}
