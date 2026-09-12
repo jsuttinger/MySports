@@ -107,7 +107,7 @@ function parseAthleteAtBat(entry) {
 // base runners, and the current batter/pitcher; football has down/distance/
 // possession. Everything here is optional — a sport that doesn't provide a
 // field just won't render it.
-function parseSituation(competition) {
+function parseSituation(competition, homeCompetitor, awayCompetitor) {
   const situation = competition?.situation
   if (!situation) return null
 
@@ -118,10 +118,24 @@ function parseSituation(competition) {
       ? `${DOWN_NAMES[situation.down] ?? situation.down} & ${situation.distance}`
       : null)
 
+  // ESPN identifies the team with the ball by id (football only) -- match it
+  // against the raw home/away competitor entries to know which side to badge
+  // with the possession icon, independent of possessionText's abbreviation.
+  const possessionId = situation.possession != null ? String(situation.possession) : null
+  const homeId = homeCompetitor?.id ?? homeCompetitor?.team?.id
+  const awayId = awayCompetitor?.id ?? awayCompetitor?.team?.id
+  const possessionSide =
+    possessionId && possessionId === String(homeId)
+      ? 'home'
+      : possessionId && possessionId === String(awayId)
+        ? 'away'
+        : null
+
   return {
     lastPlay: situation.lastPlay?.text ?? null,
     downDistance,
     possession: situation.possessionText ?? null,
+    possessionSide,
     balls: situation.balls ?? null,
     strikes: situation.strikes ?? null,
     outs: situation.outs ?? null,
@@ -157,7 +171,7 @@ function parseEvent(event) {
     home: parseTeam(home),
     away: parseTeam(away),
     odds: parseOdds(competition),
-    situation: parseSituation(competition),
+    situation: parseSituation(competition, home, away),
   }
 }
 

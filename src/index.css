@@ -545,6 +545,12 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+.possession-icon {
+  flex: none;
+  align-self: center;
+  color: var(--pin);
+}
+
 /* Live detail */
 
 .live-detail {

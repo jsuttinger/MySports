@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { pickAccentColor } from '../utils/teamColor'
 import BaseDiamond from './BaseDiamond'
 import Chevron from './Chevron'
+import FootballIcon from './FootballIcon'
 import GameDetail from './GameDetail'
 import PinIcon from './PinIcon'
 
@@ -46,7 +47,7 @@ function TeamLogo({ team }) {
   )
 }
 
-function TeamRow({ team, showScore, muted, spread }) {
+function TeamRow({ team, showScore, muted, spread, hasPossession }) {
   return (
     <div className="team-row">
       <TeamLogo team={team} />
@@ -57,6 +58,7 @@ function TeamRow({ team, showScore, muted, spread }) {
           >
             {team.name}
           </span>
+          {hasPossession && <FootballIcon className="possession-icon" />}
           {spread && <span className="team-spread">{spread}</span>}
         </span>
         {team.record && <span className="team-record">{team.record}</span>}
@@ -218,12 +220,14 @@ function TeamScoreCard({ game, sportKey, expanded, onToggle, pinned, onTogglePin
           showScore={showScore}
           muted={isFinal && hasWinner && !game.away.winner}
           spread={awaySpread}
+          hasPossession={game.status === 'live' && game.situation?.possessionSide === 'away'}
         />
         <TeamRow
           team={game.home}
           showScore={showScore}
           muted={isFinal && hasWinner && !game.home.winner}
           spread={homeSpread}
+          hasPossession={game.status === 'live' && game.situation?.possessionSide === 'home'}
         />
       </div>
 
