@@ -44,6 +44,7 @@ function GameList({ sport, isToday, isFavorite, isPinned, onTogglePin }) {
           onToggle={() => setExpandedId((current) => (current === game.id ? null : game.id))}
           pinned={isPinnedGame(game)}
           onTogglePin={isToday ? () => onTogglePin(sport.key, game.id) : null}
+          lastUpdated={sport.lastUpdated}
         />
       ))}
     </div>

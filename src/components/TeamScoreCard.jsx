@@ -109,7 +109,7 @@ function LiveDetail({ situation }) {
   )
 }
 
-function TeamScoreCard({ game, sportKey, expanded, onToggle, pinned, onTogglePin }) {
+function TeamScoreCard({ game, sportKey, expanded, onToggle, pinned, onTogglePin, lastUpdated }) {
   const showScore = game.status !== 'scheduled'
   const isFinal = game.status === 'final'
   const hasWinner = game.home.winner || game.away.winner
@@ -242,7 +242,7 @@ function TeamScoreCard({ game, sportKey, expanded, onToggle, pinned, onTogglePin
 
       <div className={`game-detail-wrapper${expanded ? ' game-detail-wrapper--expanded' : ''}`}>
         <div className="game-detail-inner">
-          <GameDetail sportKey={sportKey} game={game} expanded={expanded} />
+          <GameDetail sportKey={sportKey} game={game} expanded={expanded} lastUpdated={lastUpdated} />
         </div>
       </div>
     </article>

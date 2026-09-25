@@ -2,8 +2,10 @@ import { useCallback, useEffect, useState } from 'react'
 import { fetchScoreboard } from '../services/espnApi'
 import { todayParam } from '../utils/date'
 
-// Also used by expanded-card detail views (scoring summary, box score, etc)
-// so their background refresh runs on the same cadence as the main feed.
+// Expanded-card detail views (scoring summary, box score, etc) no longer run
+// their own timer -- they key off `lastUpdated` below and so ride this same
+// cadence automatically, plus the immediate refresh on regaining visibility
+// and on manual pull-to-refresh/refresh-button taps.
 export const REFRESH_INTERVAL_MS = 60000
 
 // Marks each game with when its score last changed (or carries the previous

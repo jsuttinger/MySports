@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import DetailRow from './DetailRow'
 import ScoringSummary from './ScoringSummary'
 import { fetchScoringPlays } from '../services/espnApi'
-import { REFRESH_INTERVAL_MS } from '../hooks/useScoreboard'
 
 // Sports with a real scoring-play feed available (see espnApi.fetchScoringPlays).
 // Others just get the generic record/situation info below.
@@ -19,7 +18,7 @@ const SCORING_SUMMARY_EMPTY_MESSAGE = {
 // Team records are already shown inline under each team's name in the card
 // header (visible whether or not this is expanded), so they aren't repeated
 // here.
-function GenericGameDetail({ game, sportKey, expanded }) {
+function GenericGameDetail({ game, sportKey, expanded, lastUpdated }) {
   const hasLastPlay = Boolean(game.situation?.lastPlay)
   const hasPossession = Boolean(game.situation?.downDistance)
 
@@ -31,9 +30,11 @@ function GenericGameDetail({ game, sportKey, expanded }) {
   const hasLoadedRef = useRef(false)
 
   // Same pattern as MlbGameDetail: fetch once on expand, then keep
-  // refetching on the main feed's cadence for as long as this card is
-  // expanded and the game is still live, so new scoring plays show up
-  // without collapsing/reopening the card.
+  // refetching whenever `lastUpdated` changes -- i.e. every time the main
+  // feed itself refreshes (its own 60s timer, the tab/app regaining
+  // visibility, or a manual pull-to-refresh/refresh-button tap) -- for as
+  // long as this card is expanded and the game is still live, so new
+  // scoring plays show up without collapsing/reopening the card.
   useEffect(() => {
     if (!supportsScoringSummary || !expanded) return
 
@@ -60,18 +61,17 @@ function GenericGameDetail({ game, sportKey, expanded }) {
 
     load()
 
-    if (game.status !== 'live') {
-      return () => {
-        cancelled = true
-      }
-    }
-
-    const intervalId = setInterval(load, REFRESH_INTERVAL_MS)
     return () => {
       cancelled = true
-      clearInterval(intervalId)
     }
-  }, [supportsScoringSummary, expanded, sportKey, game.id, game.status])
+  }, [
+    supportsScoringSummary,
+    expanded,
+    sportKey,
+    game.id,
+    game.status,
+    game.status === 'live' ? lastUpdated : null,
+  ])
 
   const hasOtherInfo = hasPossession || hasLastPlay
 

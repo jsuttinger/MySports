@@ -4,7 +4,6 @@ import Chevron from './Chevron'
 import DetailRow from './DetailRow'
 import ScoringSummary from './ScoringSummary'
 import { fetchMlbGameSummary } from '../services/espnApi'
-import { REFRESH_INTERVAL_MS } from '../hooks/useScoreboard'
 
 const BATTING_COLUMNS = ['AB', 'R', 'H', 'RBI', 'HR', 'BB', 'K']
 const PITCHING_COLUMNS = ['IP', 'H', 'R', 'ER', 'BB', 'K', 'ERA']
@@ -191,7 +190,7 @@ function FullBoxScoreToggle({ teams, awayTeam, homeTeam, loading, error }) {
   )
 }
 
-function MlbGameDetail({ game, expanded }) {
+function MlbGameDetail({ game, expanded, lastUpdated }) {
   const [summary, setSummary] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -201,10 +200,14 @@ function MlbGameDetail({ game, expanded }) {
   // view stays mounted even while collapsed, for the expand/collapse CSS
   // animation) and not on scheduled games, which have no plays or box score
   // yet. Then, for as long as the card stays expanded and the game is still
-  // live, keep refetching on the same cadence the main feed refreshes on —
-  // otherwise scoring plays and the box score go stale until the card is
-  // collapsed and reopened. A final game's summary won't change again once
-  // fetched, so the interval stops there rather than polling forever.
+  // live, refetch every time `lastUpdated` changes -- i.e. every time the
+  // main feed itself refreshes, whether that's its own 60s timer, the tab/app
+  // regaining visibility, or the user pulling to refresh or hitting the
+  // refresh button. Running on the main feed's own signal (rather than a
+  // separate timer of our own) means backgrounding the app no longer leaves
+  // stats stuck until a full restart -- the same event that revives the
+  // scoreboard revives this too. A final game's summary won't change again
+  // once fetched, so it stops refetching there rather than polling forever.
   useEffect(() => {
     if (!expanded || game.status === 'scheduled') return
 
@@ -234,18 +237,10 @@ function MlbGameDetail({ game, expanded }) {
 
     load()
 
-    if (game.status !== 'live') {
-      return () => {
-        cancelled = true
-      }
-    }
-
-    const intervalId = setInterval(load, REFRESH_INTERVAL_MS)
     return () => {
       cancelled = true
-      clearInterval(intervalId)
     }
-  }, [expanded, game.id, game.status])
+  }, [expanded, game.id, game.status, game.status === 'live' ? lastUpdated : null])
 
   if (game.status === 'scheduled') {
     return (

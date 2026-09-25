@@ -3,7 +3,6 @@ import Chevron from './Chevron'
 import DetailRow from './DetailRow'
 import ScoringSummary from './ScoringSummary'
 import { fetchFootballGameSummary } from '../services/espnApi'
-import { REFRESH_INTERVAL_MS } from '../hooks/useScoreboard'
 
 function StatTable({ category }) {
   const { title, labels, rows } = category
@@ -104,17 +103,20 @@ function FullBoxScoreToggle({ teams, awayTeam, homeTeam, loading, error }) {
 
 // Shared by NFL and NCAAF -- ESPN returns the exact same shape (scoring
 // plays + up to ten box score categories per team) for both.
-function FootballGameDetail({ game, sportKey, expanded }) {
+function FootballGameDetail({ game, sportKey, expanded, lastUpdated }) {
   const [summary, setSummary] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const hasLoadedRef = useRef(false)
 
   // Same pattern as MlbGameDetail: fetch once the card is actually expanded
-  // (not scheduled games, which have nothing yet), then keep refetching on
-  // the main feed's cadence for as long as the card stays expanded and the
-  // game is still live. A background refresh doesn't reset the loading
-  // spinner or blank out data already on screen over one failed poll.
+  // (not scheduled games, which have nothing yet), then keep refetching
+  // whenever `lastUpdated` changes -- i.e. every time the main feed itself
+  // refreshes (its own 60s timer, the tab/app regaining visibility, or a
+  // manual pull-to-refresh/refresh-button tap) -- for as long as the card
+  // stays expanded and the game is still live. A background refresh doesn't
+  // reset the loading spinner or blank out data already on screen over one
+  // failed poll.
   useEffect(() => {
     if (!expanded || game.status === 'scheduled') return
 
@@ -141,18 +143,10 @@ function FootballGameDetail({ game, sportKey, expanded }) {
 
     load()
 
-    if (game.status !== 'live') {
-      return () => {
-        cancelled = true
-      }
-    }
-
-    const intervalId = setInterval(load, REFRESH_INTERVAL_MS)
     return () => {
       cancelled = true
-      clearInterval(intervalId)
     }
-  }, [expanded, sportKey, game.id, game.status])
+  }, [expanded, sportKey, game.id, game.status, game.status === 'live' ? lastUpdated : null])
 
   const hasLastPlay = Boolean(game.situation?.lastPlay)
   const hasPossession = Boolean(game.situation?.downDistance)
