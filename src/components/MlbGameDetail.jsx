@@ -224,7 +224,7 @@ function MlbGameDetail({ game, expanded, lastUpdated }) {
         })
         .catch((err) => {
           if (cancelled) return
-          console.error(`[MySports] Failed to fetch game summary for event ${game.id}`, err)
+          console.error(`[Scoreboard] Failed to fetch game summary for event ${game.id}`, err)
           // A failed background refresh shouldn't blank out data that's
           // already on screen — only surface the error if we've never had
           // anything to show.

@@ -195,7 +195,7 @@ async function fetchSportScoreboard({ key, label, url: baseUrl }, dateParam) {
   } catch (err) {
     // Surface the exact error (e.g. a CORS failure will show as a TypeError:
     // "Failed to fetch" here, with the real reason only visible in devtools).
-    console.error(`[MySports] Failed to fetch ${label} scoreboard from ${url}`, err)
+    console.error(`[Scoreboard] Failed to fetch ${label} scoreboard from ${url}`, err)
     return { key, label, url, dateParam, games: [], error: err.message ?? String(err) }
   }
 }

@@ -51,7 +51,7 @@ function GenericGameDetail({ game, sportKey, expanded, lastUpdated }) {
         })
         .catch((err) => {
           if (cancelled) return
-          console.error(`[MySports] Failed to fetch scoring plays for event ${game.id}`, err)
+          console.error(`[Scoreboard] Failed to fetch scoring plays for event ${game.id}`, err)
           if (!hasLoadedRef.current) setError(err.message ?? String(err))
         })
         .finally(() => {

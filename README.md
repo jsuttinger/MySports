@@ -1,4 +1,4 @@
-# MySports
+# Scoreboard
 Sports score and live updates app
 
 ## Step 1: prove live score fetching works

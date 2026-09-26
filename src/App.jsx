@@ -57,7 +57,7 @@ function App() {
     <div className="app app--bottom-nav">
       <PullToRefresh onRefresh={refresh} disabled={favoritesOpen}>
         <header className="app-header">
-          <h1>MySports</h1>
+          <h1>Scoreboard</h1>
           <button
             type="button"
             className="icon-button"

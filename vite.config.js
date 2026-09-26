@@ -11,8 +11,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/icon-32.png', 'icons/icon-180.png'],
       manifest: {
-        name: 'MySports',
-        short_name: 'MySports',
+        name: 'Scoreboard',
+        short_name: 'Scoreboard',
         description: 'Live scores for NFL, NCAAF, MLB, and NHL',
         start_url: '/MySports/',
         scope: '/MySports/',
