@@ -154,6 +154,48 @@ function isPreseason(event) {
   return event.season?.type === 1
 }
 
+// TV/streaming networks carrying the game, e.g. [{market: 'national', names:
+// ['TBS', 'truTV']}] -- a game can have several entries (national plus each
+// team's regional feed), each with its own names list. Flattened, deduped,
+// and joined into one display string ("TBS, truTV"); null when ESPN has
+// nothing (common for lower-profile games), so the UI can omit the tag
+// entirely rather than show an empty one.
+function parseBroadcasts(competition) {
+  const names = (competition?.broadcasts ?? []).flatMap((entry) => entry.names ?? [])
+  const unique = [...new Set(names)]
+  return unique.length > 0 ? unique.join(', ') : null
+}
+
+// Playoff round + series record, e.g. "ALDS | White Sox lead series 2-1".
+// ESPN marks a playoff game with `series` (record/status, keyed by team
+// abbreviation) and a separate `notes` entry carrying the round's short name
+// ("ALDS - Game 4"). Regular-season games have neither, so this is null for
+// them and the UI shows nothing.
+function parseSeriesContext(competition, homeCompetitor, awayCompetitor) {
+  const series = competition?.series
+  if (!series || series.type !== 'playoff' || !series.summary) return null
+
+  // ESPN's summary leads with a team abbreviation ("CHW lead series 2-1") --
+  // swap in the full team name to match how teams are named everywhere else
+  // in the app. Falls back to ESPN's text as-is if the format doesn't match
+  // (e.g. a tied-series phrasing with no leading abbreviation) or the
+  // abbreviation doesn't match either side.
+  const match = series.summary.match(/^([A-Z]+)\s+(.*)$/)
+  let summary = series.summary
+  if (match) {
+    const [, abbr, rest] = match
+    const homeTeam = homeCompetitor?.team
+    const awayTeam = awayCompetitor?.team
+    if (abbr === homeTeam?.abbreviation) summary = `${homeTeam.displayName ?? abbr} ${rest}`
+    else if (abbr === awayTeam?.abbreviation) summary = `${awayTeam.displayName ?? abbr} ${rest}`
+  }
+
+  const headline = competition?.notes?.find((note) => note.headline)?.headline ?? null
+  const round = headline ? headline.split(' - ')[0].trim() : null
+
+  return round ? `${round} | ${summary}` : summary
+}
+
 function parseEvent(event) {
   const competition = event.competitions?.[0]
   const competitors = competition?.competitors ?? []
@@ -172,6 +214,8 @@ function parseEvent(event) {
     away: parseTeam(away),
     odds: parseOdds(competition),
     situation: parseSituation(competition, home, away),
+    broadcast: parseBroadcasts(competition),
+    seriesContext: parseSeriesContext(competition, home, away),
   }
 }
 

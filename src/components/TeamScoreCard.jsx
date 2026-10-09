@@ -231,6 +231,13 @@ function TeamScoreCard({ game, sportKey, expanded, onToggle, pinned, onTogglePin
         />
       </div>
 
+      {(game.seriesContext || game.broadcast) && (
+        <div className="game-card__meta">
+          {game.seriesContext && <p className="game-card__series">{game.seriesContext}</p>}
+          {game.broadcast && <span className="broadcast-tag">{game.broadcast}</span>}
+        </div>
+      )}
+
       {game.status === 'live' && !expanded && <LiveDetail situation={game.situation} />}
 
       {game.odds && (fallbackSpreadText || game.odds.overUnder != null) && (

@@ -672,6 +672,33 @@ body {
   font-weight: 500;
 }
 
+/* Series context (playoffs) + TV broadcast tag */
+
+.game-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.game-card__series {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+
+.broadcast-tag {
+  flex: none;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
 /* Expandable game detail */
 
 .game-detail-wrapper {
