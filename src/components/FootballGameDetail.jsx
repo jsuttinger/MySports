@@ -22,7 +22,7 @@ function StatTable({ category }) {
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={row.name}>
+              <tr key={row.id ?? row.name}>
                 <td className="full-box__name-col">{row.name}</td>
                 {labels.map((col) => (
                   <td key={col}>{row.stats[col] ?? '-'}</td>

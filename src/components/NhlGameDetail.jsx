@@ -1,0 +1,219 @@
+import { useEffect, useRef, useState } from 'react'
+import Chevron from './Chevron'
+import ScoringSummary from './ScoringSummary'
+import { fetchNhlGameSummary } from '../services/espnApi'
+
+const SKATER_COLUMNS = ['G', 'A', 'PTS', '+/-', 'SOG', 'PIM', 'TOI', 'HT', 'BS', 'FW']
+const GOALIE_COLUMNS = ['SV', 'SA', 'GA', 'SV%', 'TOI']
+const TOTALS_COLUMNS = [
+  { key: 'shots', label: 'S' },
+  { key: 'powerPlay', label: 'PP' },
+  { key: 'faceoffPct', label: 'FO%' },
+  { key: 'hits', label: 'HT' },
+  { key: 'blockedShots', label: 'BS' },
+  { key: 'pim', label: 'PIM' },
+]
+
+// Side-by-side team totals (shots, power play, faceoffs, etc) -- shown once
+// at the top of the box score rather than repeated inside each team's own
+// skaters/goalies block below.
+function TeamTotals({ teams }) {
+  const hasAny = teams.some((team) => TOTALS_COLUMNS.some((col) => team.totals?.[col.key] != null))
+  if (!hasAny) return null
+
+  return (
+    <table className="box-score">
+      <thead>
+        <tr>
+          <th></th>
+          {TOTALS_COLUMNS.map((col) => (
+            <th key={col.key}>{col.label}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {teams.map((team) => (
+          <tr key={team.abbreviation}>
+            <td className="box-score__team">{team.abbreviation}</td>
+            {TOTALS_COLUMNS.map((col) => (
+              <td key={col.key}>{team.totals?.[col.key] ?? '-'}</td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+
+function StatTable({ title, rows, columns }) {
+  if (!rows || rows.length === 0) return null
+
+  return (
+    <div className="full-box__section">
+      <h4 className="section-heading">{title}</h4>
+      <div className="full-box__table-wrap">
+        <table className="full-box__table">
+          <thead>
+            <tr>
+              <th className="full-box__name-col"></th>
+              {columns.map((col) => (
+                <th key={col}>{col}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.id ?? row.name}>
+                <td className="full-box__name-col">{row.name}</td>
+                {columns.map((col) => (
+                  <td key={col}>{row.stats[col] ?? '-'}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+// Matches a box-score entry (only an abbreviation, from ESPN's summary
+// endpoint) back to the richer team object the scoreboard already gave us
+// (name, logo, home/away), so the section header can show more than just
+// three letters and pick up that team's card-glow color for its accent bar.
+function matchTeam(abbreviation, awayTeam, homeTeam) {
+  if (homeTeam?.abbreviation === abbreviation) return { team: homeTeam, isHome: true }
+  if (awayTeam?.abbreviation === abbreviation) return { team: awayTeam, isHome: false }
+  return { team: null, isHome: false }
+}
+
+function FullBoxScore({ teams, awayTeam, homeTeam }) {
+  return (
+    <div className="full-box">
+      <TeamTotals teams={teams} />
+      {teams.map((team) => {
+        const { team: matched, isHome } = matchTeam(team.abbreviation, awayTeam, homeTeam)
+        return (
+          <div
+            key={team.abbreviation}
+            className="full-box__team"
+            style={{ '--full-box-accent': isHome ? 'var(--home-glow)' : 'var(--away-glow)' }}
+          >
+            <div className="full-box__team-header">
+              {matched?.logo && <img className="full-box__team-logo" src={matched.logo} alt="" aria-hidden="true" />}
+              <span className="full-box__team-name">{matched?.name ?? team.abbreviation}</span>
+            </div>
+            <StatTable title="Skaters" rows={team.skaters} columns={SKATER_COLUMNS} />
+            <StatTable title="Goalies" rows={team.goalies} columns={GOALIE_COLUMNS} />
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// Same collapsible pattern as MLB/football's Full Box Score: purely
+// presentational, hidden by default, revealing whatever the parent has
+// already fetched.
+function FullBoxScoreToggle({ teams, awayTeam, homeTeam, loading, error }) {
+  const [open, setOpen] = useState(false)
+  const hasStats = teams?.some((team) => team.skaters.length > 0 || team.goalies.length > 0)
+
+  function handleClick(event) {
+    // Don't let this bubble up to the card's own tap-to-collapse handler.
+    event.stopPropagation()
+    setOpen((current) => !current)
+  }
+
+  return (
+    <div className="full-box-toggle">
+      <button type="button" className="full-box-toggle__button" onClick={handleClick} aria-expanded={open}>
+        {open ? 'Hide Full Box Score' : 'Full Box Score'}
+        <Chevron expanded={open} />
+      </button>
+      {open && (
+        <div className="full-box-toggle__content">
+          {loading && <p className="game-detail__placeholder">Loading full box score…</p>}
+          {error && <p className="state-message--error">Couldn't load box score: {error}</p>}
+          {!loading && !error && !hasStats && <p className="game-detail__placeholder">Not available yet.</p>}
+          {hasStats && <FullBoxScore teams={teams} awayTeam={awayTeam} homeTeam={homeTeam} />}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function NhlGameDetail({ game, expanded, lastUpdated }) {
+  const [summary, setSummary] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const hasLoadedRef = useRef(false)
+
+  // Same pattern as MlbGameDetail/FootballGameDetail: fetch once the card is
+  // actually expanded (not scheduled games, which have nothing yet), then
+  // refetch every time `lastUpdated` changes -- i.e. every time the main
+  // feed itself refreshes (its own 60s timer, the tab/app regaining
+  // visibility, or a manual pull-to-refresh/refresh-button tap) -- for as
+  // long as the card stays expanded and the game is still live.
+  useEffect(() => {
+    if (!expanded || game.status === 'scheduled') return
+
+    let cancelled = false
+
+    function load() {
+      if (!hasLoadedRef.current) setLoading(true)
+      fetchNhlGameSummary(game.id)
+        .then((result) => {
+          if (cancelled) return
+          hasLoadedRef.current = true
+          setSummary(result)
+          setError(null)
+        })
+        .catch((err) => {
+          if (cancelled) return
+          console.error(`[Scoreboard] Failed to fetch NHL game summary for event ${game.id}`, err)
+          if (!hasLoadedRef.current) setError(err.message ?? String(err))
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false)
+        })
+    }
+
+    load()
+
+    return () => {
+      cancelled = true
+    }
+  }, [expanded, game.id, game.status, game.status === 'live' ? lastUpdated : null])
+
+  const hasLastPlay = Boolean(game.situation?.lastPlay)
+
+  if (game.status === 'scheduled') {
+    return (
+      <div className="game-detail">
+        <p className="game-detail__placeholder">No additional info yet.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="game-detail">
+      {hasLastPlay && <p className="game-detail__note">{game.situation.lastPlay}</p>}
+      <ScoringSummary
+        loading={loading}
+        error={error}
+        plays={summary?.scoringPlays}
+        emptyMessage="No goals scored yet."
+      />
+      <FullBoxScoreToggle
+        teams={summary?.boxScore}
+        awayTeam={game.away}
+        homeTeam={game.home}
+        loading={loading}
+        error={error}
+      />
+    </div>
+  )
+}
+
+export default NhlGameDetail

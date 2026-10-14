@@ -113,7 +113,7 @@ function StatTable({ title, rows, columns }) {
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={row.name}>
+              <tr key={row.id ?? row.name}>
                 <td className="full-box__name-col">{row.name}</td>
                 {columns.map((col) => (
                   <td key={col}>{row.stats[col] ?? '-'}</td>

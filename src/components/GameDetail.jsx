@@ -1,5 +1,6 @@
 import MlbGameDetail from './MlbGameDetail'
 import FootballGameDetail from './FootballGameDetail'
+import NhlGameDetail from './NhlGameDetail'
 import GenericGameDetail from './GenericGameDetail'
 
 // Sport-aware dispatcher: add a case here (and a matching component) to
@@ -13,6 +14,7 @@ function GameDetail({ sportKey, game, expanded, lastUpdated }) {
   if (sportKey === 'nfl' || sportKey === 'ncaaf') {
     return <FootballGameDetail sportKey={sportKey} game={game} expanded={expanded} lastUpdated={lastUpdated} />
   }
+  if (sportKey === 'nhl') return <NhlGameDetail game={game} expanded={expanded} lastUpdated={lastUpdated} />
   return <GenericGameDetail game={game} sportKey={sportKey} expanded={expanded} lastUpdated={lastUpdated} />
 }
 

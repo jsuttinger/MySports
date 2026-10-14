@@ -265,7 +265,14 @@ function parseBoxScoreCategory(category) {
     labels.forEach((label, i) => {
       stats[label] = entry.stats?.[i] ?? null
     })
-    return { name: entry.athlete?.shortName ?? entry.athlete?.displayName ?? 'Unknown', stats }
+    // `id` is ESPN's athlete id -- unique, unlike `name` (shortName), which
+    // two different players can share (e.g. two "A. Johansson"s) and would
+    // collide as a React list key.
+    return {
+      id: entry.athlete?.id ?? entry.athlete?.shortName,
+      name: entry.athlete?.shortName ?? entry.athlete?.displayName ?? 'Unknown',
+      stats,
+    }
   })
 }
 
@@ -323,13 +330,6 @@ export async function fetchMlbGameSummary(eventId) {
     boxScore: teams.map(parseBoxScoreTeam),
     scoringPlays: parseMlbScoringPlays(json),
   }
-}
-
-// NFL and NCAAF have their own dedicated fetch (fetchFootballGameSummary,
-// below) that pulls scoring plays and the full box score together in one
-// request, so neither is listed here.
-const SCORING_SUMMARY_URLS = {
-  nhl: 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary',
 }
 
 // NFL/NCAAF quarters/OT: period.number has no displayValue on this endpoint
@@ -435,9 +435,124 @@ export async function fetchFootballGameSummary(sportKey, eventId) {
   }
 }
 
-// NHL matches MLB's shape (scoringPlay flag inside the full `plays` list),
-// but period.displayValue is already formatted ("1st", "2nd", "3rd"), so no
-// ordinal conversion needed.
+// NHL's box score splits skaters into "forwards" and "defenses" categories
+// (identical columns) plus a separate "goalies" category. Each category's
+// `labels`/`athletes[].stats` follow the same label-indexed shape as MLB and
+// football (see parseBoxScoreCategory), so values are pulled out by label
+// name -- robust to ESPN reordering columns. Forwards and defenses are
+// combined into one Skaters table; the UI doesn't need them split out.
+// ESPN has no "points" stat, so it's computed here (goals + assists), and
+// "SOG" is sourced from ESPN's `S` (shotsTotal) label -- ESPN's own `SOG`
+// abbreviation means shootout goals, a different and much rarer stat.
+function parseNhlSkaterRow(entry, labels) {
+  const byLabel = {}
+  labels.forEach((label, i) => {
+    byLabel[label] = entry.stats?.[i] ?? null
+  })
+  const goals = Number(byLabel.G) || 0
+  const assists = Number(byLabel.A) || 0
+  return {
+    id: entry.athlete?.id ?? entry.athlete?.shortName,
+    name: entry.athlete?.shortName ?? entry.athlete?.displayName ?? 'Unknown',
+    stats: {
+      G: byLabel.G ?? '0',
+      A: byLabel.A ?? '0',
+      PTS: String(goals + assists),
+      '+/-': byLabel['+/-'] ?? '0',
+      SOG: byLabel.S ?? '0',
+      PIM: byLabel.PIM ?? '0',
+      TOI: byLabel.TOI ?? '-',
+      HT: byLabel.HT ?? '0',
+      BS: byLabel.BS ?? '0',
+      FW: byLabel.FW ?? '0',
+    },
+  }
+}
+
+function parseNhlGoalieRow(entry, labels) {
+  const byLabel = {}
+  labels.forEach((label, i) => {
+    byLabel[label] = entry.stats?.[i] ?? null
+  })
+  return {
+    id: entry.athlete?.id ?? entry.athlete?.shortName,
+    name: entry.athlete?.shortName ?? entry.athlete?.displayName ?? 'Unknown',
+    stats: {
+      SV: byLabel.SV ?? '0',
+      SA: byLabel.SA ?? '0',
+      GA: byLabel.GA ?? '0',
+      'SV%': byLabel['SV%'] ?? '-',
+      TOI: byLabel.TOI ?? '-',
+    },
+  }
+}
+
+// Team-level totals (shots, power play, faceoffs, etc) live in a separate
+// flat `statistics` array on the `teams` entry, keyed by abbreviation --
+// unrelated to the per-player `players` entry matched alongside it below.
+function parseNhlTeamTotals(teamEntry) {
+  const byAbbr = {}
+  ;(teamEntry?.statistics ?? []).forEach((stat) => {
+    byAbbr[stat.abbreviation] = stat.displayValue
+  })
+  const powerPlay =
+    byAbbr.PPG != null && byAbbr.PPO != null ? `${byAbbr.PPG}/${byAbbr.PPO}` : null
+  return {
+    shots: byAbbr.S ?? null,
+    powerPlay,
+    faceoffPct: byAbbr['FO%'] ?? null,
+    hits: byAbbr.HT ?? null,
+    blockedShots: byAbbr.BS ?? null,
+    pim: byAbbr.PIM ?? null,
+  }
+}
+
+function parseNhlBoxScoreTeam(teamEntry, playersEntry) {
+  const categories = playersEntry?.statistics ?? []
+  const skaterCategories = categories.filter((c) => c.name === 'forwards' || c.name === 'defenses')
+  const goalieCategory = categories.find((c) => c.name === 'goalies')
+
+  const skaters = skaterCategories.flatMap((category) =>
+    (category.athletes ?? []).map((athlete) => parseNhlSkaterRow(athlete, category.labels ?? []))
+  )
+  const goalies = (goalieCategory?.athletes ?? []).map((athlete) =>
+    parseNhlGoalieRow(athlete, goalieCategory.labels ?? [])
+  )
+
+  return {
+    abbreviation: teamEntry?.team?.abbreviation ?? '',
+    skaters,
+    goalies,
+    totals: parseNhlTeamTotals(teamEntry),
+  }
+}
+
+// NHL flags goals the same way MLB does (a `scoringPlay` flag inside the
+// full `plays` list, period.displayValue already formatted as "1st"/"2nd"/
+// etc), but each play also carries structured scorer/assister participants
+// and a strength tag, so the text is built fresh here rather than reusing
+// ESPN's own `play.text` -- lets the summary read like a broadcast call
+// ("Auston Matthews (12) from Mitch Marner, William Nylander — Power Play,
+// 14:32") instead of ESPN's terser "Matthews Goal (12) Wrist Shot, assists:
+// ...". ytdGoals on the scorer participant is their season goal total
+// through this goal, used for the "(12)".
+function formatNhlGoalText(play) {
+  const participants = play.participants ?? []
+  const scorer = participants.find((p) => p.type === 'scorer')
+  if (!scorer) return play.text ?? ''
+
+  const assisters = participants.filter((p) => p.type === 'assister')
+  const scorerName = scorer.athlete?.displayName ?? 'Unknown'
+  const goalNum = scorer.ytdGoals != null ? ` (${scorer.ytdGoals})` : ''
+  const assistText =
+    assisters.length > 0 ? ` from ${assisters.map((a) => a.athlete?.displayName).join(', ')}` : ' unassisted'
+  const strengthText = play.strength?.text
+  const strengthTag = strengthText && strengthText !== 'Even Strength' ? ` — ${strengthText}` : ''
+  const clock = play.clock?.displayValue ? `, ${play.clock.displayValue}` : ''
+
+  return `${scorerName}${goalNum}${assistText}${strengthTag}${clock}`
+}
+
 function parseNhlScoringPlays(json) {
   const plays = json.plays ?? []
   return plays
@@ -445,15 +560,43 @@ function parseNhlScoringPlays(json) {
     .map((play) => ({
       id: play.id,
       inningLabel: play.period?.displayValue ? `${play.period.displayValue} Period` : '',
-      text: play.text ?? '',
+      text: formatNhlGoalText(play),
     }))
 }
 
+const NHL_SUMMARY_URL = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary'
+
+// Full player-level box score (skaters, goalies, team totals) + scoring play
+// log for one NHL game, fetched lazily (only once the card is actually
+// expanded) -- same pattern as fetchMlbGameSummary/fetchFootballGameSummary.
+// `teams` (team totals) and `players` (per-player stats) are parallel arrays
+// from ESPN; matched by abbreviation rather than assumed index order.
+export async function fetchNhlGameSummary(eventId) {
+  const response = await fetch(`${NHL_SUMMARY_URL}?event=${eventId}`)
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} ${response.statusText}`)
+  }
+  const json = await response.json()
+  const teams = json.boxscore?.teams ?? []
+  const players = json.boxscore?.players ?? []
+  const boxScore = teams.map((teamEntry) => {
+    const playersEntry = players.find((p) => p.team?.abbreviation === teamEntry.team?.abbreviation)
+    return parseNhlBoxScoreTeam(teamEntry, playersEntry)
+  })
+  return {
+    boxScore,
+    scoringPlays: parseNhlScoringPlays(json),
+  }
+}
+
 // Scoring plays only (no box score) for sports that don't have a full
-// dedicated detail view yet (NHL — NFL, NCAAF, and MLB have their own).
-// Returns [] for sports without a known summary endpoint/shape rather than
-// throwing, so callers can treat "unsupported" and "no plays yet" the same
-// way.
+// dedicated detail view yet. Returns [] for sports without a known summary
+// endpoint/shape rather than throwing, so callers can treat "unsupported"
+// and "no plays yet" the same way. Currently empty -- NFL, NCAAF, MLB, and
+// NHL all have their own dedicated fetch with a full box score; kept around
+// as the fallback path for any future sport that only needs scoring plays.
+const SCORING_SUMMARY_URLS = {}
+
 export async function fetchScoringPlays(sportKey, eventId) {
   const baseUrl = SCORING_SUMMARY_URLS[sportKey]
   if (!baseUrl) return []
@@ -462,9 +605,7 @@ export async function fetchScoringPlays(sportKey, eventId) {
   if (!response.ok) {
     throw new Error(`HTTP ${response.status} ${response.statusText}`)
   }
-  const json = await response.json()
-
-  if (sportKey === 'nhl') return parseNhlScoringPlays(json)
+  await response.json()
   return []
 }
 
